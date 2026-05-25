@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ExitNav – Trénink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0c0e; --surface:#111418; --border:#1e2530;
+      --accent:#ff4d1c; --accent2:#ffb800; --ok:#00e87a;
+      --text:#e8eaed; --muted:#5a6270;
+      --mono:'Share Tech Mono',monospace; --sans:'Barlow Condensed',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;}
+
+    #header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;background:var(--bg);border-bottom:1px solid var(--border);}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:34px;height:34px;background:var(--accent);clip-path:polygon(50% 0%,100% 100%,0% 100%);}
+    .logo-text{font-size:22px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;}
+    .logo-text span{color:var(--accent);}
+    .nav-links{display:flex;gap:12px;}
+    .nav-links a{font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:0.08em;text-transform:uppercase;padding:4px 8px;border:1px solid transparent;border-radius:4px;transition:all 0.2s;}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);border-color:var(--border);}
+
+    #content{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:24px;max-width:1100px;margin:0 auto;width:100%;}
+    @media(max-width:700px){#content{grid-template-columns:1fr;}}
+
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;}
+    .card-title{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid var(--border);}
+
+    .form-group{display:flex;flex-direction:column;gap:6px;}
+    .form-group label{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.05em;}
+    input,select{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;width:100%;transition:border 0.2s;}
+    input:focus,select:focus{border-color:var(--accent2);}
+
+    /* Drop zone */
+    #drop-zone{
+      border:2px dashed var(--border);border-radius:10px;padding:32px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+      cursor:pointer;transition:border-color 0.2s,background 0.2s;text-align:center;
+    }
+    #drop-zone:hover,#drop-zone.drag-over{border-color:var(--accent2);background:#0f0e00;}
+    #drop-zone svg{opacity:0.4;}
+    #drop-zone p{font-size:14px;color:var(--muted);line-height:1.6;}
+    #drop-zone strong{color:var(--text);}
+    #file-name{font-family:var(--mono);font-size:11px;color:var(--accent2);}
+
+    .btn{width:100%;padding:12px;border:none;border-radius:8px;cursor:pointer;font-family:var(--sans);font-size:16px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.2s;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{filter:brightness(1.1);}
+    .btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;}
+    .btn-ok{background:#0a2a18;color:var(--ok);border:1px solid var(--ok);}
+    .btn-ok:hover{background:#0f3a22;}
+    .btn-ok:disabled{opacity:0.4;cursor:not-allowed;}
+
+    /* Progress */
+    .progress-wrap{display:flex;flex-direction:column;gap:6px;}
+    .progress-bar-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+    .progress-bar-fill{height:100%;background:var(--accent2);border-radius:3px;width:0%;transition:width 0.5s;}
+    .progress-bar-fill.done{background:var(--ok);}
+
+    /* Log */
+    #train-log{
+      background:var(--bg);border:1px solid var(--border);border-radius:8px;
+      padding:12px;font-family:var(--mono);font-size:11px;color:var(--muted);
+      height:200px;overflow-y:auto;white-space:pre-wrap;line-height:1.6;
+    }
+
+    /* Classes grid */
+    #classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
+    .class-chip{
+      background:var(--bg);border:1px solid var(--border);border-radius:8px;
+      padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--text);
+      display:flex;flex-direction:column;gap:3px;
+    }
+    .class-chip .chip-count{color:var(--accent2);font-size:14px;}
+    .class-chip .chip-label{color:var(--muted);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+    /* Model status badge */
+    #model-badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 14px;border-radius:8px;font-family:var(--mono);font-size:12px;
+    }
+    #model-badge.ok{background:#0a2a18;border:1px solid var(--ok);color:var(--ok);}
+    #model-badge.missing{background:#1a0a08;border:1px solid var(--accent);color:var(--accent);}
+
+    .badge-dot{width:8px;height:8px;border-radius:50%;background:currentColor;}
+  </style>
+</head>
+<body>
+<div id="header">
+  <div class="logo">
+    <div class="logo-icon"></div>
+    <div class="logo-text">Exit<span>Nav</span></div>
+  </div>
+  <div class="nav-links">
+    <a href="index.html">Kamera</a>
+    <a href="editor.html">Editor</a>
+    <a href="train.html" class="active">Trénink</a>
+  </div>
+  <div style="width:9px"></div>
+</div>
+
+<div id="content">
+
+  <!-- LEFT: Nahrát video -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <div class="card">
+      <div class="card-title">1. Nahrát video pro třídu</div>
+
+      <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <path d="M20 8v16M13 15l7-7 7 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 30h28" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <p>Přetáhněte video sem nebo <strong>klikněte pro výběr</strong></p>
+        <span id="file-name">—</span>
+      </div>
+      <input type="file" id="file-input" accept="video/*" style="display:none" onchange="onFileSelect(this)">
+
+      <div class="form-group">
+        <label>Label (název místnosti = ID uzlu v grafu)</label>
+        <input id="in-label" placeholder="ucebna_101" />
+      </div>
+      <div class="form-group">
+        <label>FPS extrakce (snímků za sekundu z videa)</label>
+        <input id="in-fps" type="number" value="1" min="0.1" max="10" step="0.1" />
+      </div>
+
+      <button class="btn btn-primary" id="btn-extract" onclick="extractFrames()" disabled>
+        ⬆ Nahrát a extrahovat framy
+      </button>
+
+      <div class="progress-wrap" id="extract-progress" style="display:none">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)" id="extract-status">Nahrávám…</div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="extract-bar"></div></div>
+      </div>
+    </div>
+
+    <!-- Existující třídy -->
+    <div class="card">
+      <div class="card-title">Natrénované třídy</div>
+      <div id="classes-grid"><span style="font-family:var(--mono);font-size:12px;color:var(--muted)">Načítám…</span></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Trénink + status -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <div class="card">
+      <div class="card-title">2. Stav modelu</div>
+      <div id="model-badge" class="missing"><div class="badge-dot"></div> Model nenalezen</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">3. Spustit trénink</div>
+      <div class="form-group">
+        <label>Počet epoch</label>
+        <input id="in-epochs" type="number" value="20" min="1" max="200" />
+      </div>
+      <div class="form-group">
+        <label>Batch size</label>
+        <input id="in-batch" type="number" value="16" min="1" max="256" />
+      </div>
+      <div class="form-group">
+        <label>Learning rate</label>
+        <input id="in-lr" type="number" value="0.0005" step="0.0001" min="0.00001" />
+      </div>
+      <button class="btn btn-ok" id="btn-train" onclick="startTraining()">▶ Spustit trénink</button>
+    </div>
+
+    <div class="card" style="flex:1">
+      <div class="card-title">Log tréninku</div>
+      <div id="train-log">— zatím žádný výstup —</div>
+      <div class="progress-wrap" id="train-progress" style="display:none">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)" id="train-status-text">Probíhá trénink…</div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="train-bar"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API = '';
+  let selectedFile = null;
+  let trainPollId  = null;
+
+  // ---- Drop zone -----------------------------------------------
+  const dropZone = document.getElementById('drop-zone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('video/')) setFile(f);
+  });
+
+  function onFileSelect(input) { if (input.files[0]) setFile(input.files[0]); }
+  function setFile(f) {
+    selectedFile = f;
+    document.getElementById('file-name').textContent = f.name + ' (' + (f.size/1e6).toFixed(1) + ' MB)';
+    document.getElementById('btn-extract').disabled = false;
+  }
+
+  // ---- Extract frames ------------------------------------------
+  async function extractFrames() {
+    if (!selectedFile) return;
+    const label = document.getElementById('in-label').value.trim();
+    const fps   = parseFloat(document.getElementById('in-fps').value) || 1;
+    if (!label) { alert('Zadejte label místnosti'); return; }
+
+    const btn = document.getElementById('btn-extract');
+    btn.disabled = true;
+    const prog = document.getElementById('extract-progress');
+    const bar  = document.getElementById('extract-bar');
+    const stat = document.getElementById('extract-status');
+    prog.style.display = 'block';
+    bar.style.width = '10%'; stat.textContent = 'Nahrávám video…';
+
+    const fd = new FormData();
+    fd.append('video', selectedFile);
+    fd.append('label', label);
+    fd.append('fps', fps);
+
+    try {
+      bar.style.width = '40%'; stat.textContent = 'Zpracovávám na serveru…';
+      const r = await fetch(API + '/api/train/extract', { method:'POST', body: fd });
+      if (!r.ok) { const t = await r.text(); throw new Error(t); }
+      const d = await r.json();
+      bar.style.width = '100%'; bar.classList.add('done');
+      stat.textContent = `✓ Uloženo ${d.frames_saved} framů pro třídu '${d.label}'`;
+      refreshClasses();
+    } catch(e) {
+      stat.textContent = '✕ Chyba: ' + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // ---- Training ------------------------------------------------
+  async function startTraining() {
+    const epochs = parseInt(document.getElementById('in-epochs').value) || 20;
+    const batch  = parseInt(document.getElementById('in-batch').value) || 16;
+    const lr     = parseFloat(document.getElementById('in-lr').value) || 5e-4;
+
+    const btn = document.getElementById('btn-train');
+    btn.disabled = true;
+    document.getElementById('train-progress').style.display = 'block';
+    document.getElementById('train-bar').style.width = '5%';
+    document.getElementById('train-status-text').textContent = 'Spouštím trénink…';
+    document.getElementById('train-log').textContent = '';
+
+    try {
+      const r = await fetch(API + '/api/train/start', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({epochs, batch, lr})
+      });
+      if (!r.ok) { const t = await r.text(); throw new Error(t); }
+      pollTraining(epochs);
+    } catch(e) {
+      document.getElementById('train-log').textContent = 'Chyba: ' + e.message;
+      btn.disabled = false;
+    }
+  }
+
+  function pollTraining(epochs) {
+    let tick = 0;
+    clearInterval(trainPollId);
+    trainPollId = setInterval(async () => {
+      try {
+        const r = await fetch(API + '/api/train/status');
+        const d = await r.json();
+        const log = document.getElementById('train-log');
+        if (d.log && d.log.length) {
+          log.textContent = d.log.join('\n');
+          log.scrollTop = log.scrollHeight;
+          // Estimate progress from last epoch line
+          const match = d.log[d.log.length-1].match(/Epoch\s+(\d+)\//);
+          if (match) {
+            const pct = Math.round((parseInt(match[1]) / epochs) * 100);
+            document.getElementById('train-bar').style.width = pct + '%';
+            document.getElementById('train-status-text').textContent = `Trénink… ${pct}%`;
+          }
+        }
+        if (d.error) {
+          log.textContent += '\n\nCHYBA:\n' + d.error;
+          clearInterval(trainPollId);
+          document.getElementById('btn-train').disabled = false;
+        }
+        if (!d.running && !d.error) {
+          document.getElementById('train-bar').style.width = '100%';
+          document.getElementById('train-bar').classList.add('done');
+          document.getElementById('train-status-text').textContent = `✓ Trénink dokončen – nejlepší val acc: ${d.last_val_acc ? (d.last_val_acc*100).toFixed(1)+'%' : '—'}`;
+          clearInterval(trainPollId);
+          document.getElementById('btn-train').disabled = false;
+          refreshModelStatus();
+        }
+      } catch(e) { /* backend dočasně nedostupný */ }
+      tick++;
+    }, 2000);
+  }
+
+  // ---- Status & classes ----------------------------------------
+  async function refreshModelStatus() {
+    try {
+      const r = await fetch(API + '/api/model/status');
+      const d = await r.json();
+      const badge = document.getElementById('model-badge');
+      if (d.available) {
+        badge.className = 'model-badge ok';
+        badge.innerHTML = `<div class="badge-dot"></div> Model natrénován – ${d.classes?.length || 0} tříd`;
+      } else {
+        badge.className = 'model-badge missing';
+        badge.innerHTML = `<div class="badge-dot"></div> Model nenalezen`;
+      }
+    } catch(e) {}
+  }
+
+  async function refreshClasses() {
+    // Poll training data dir via model status classes, or show placeholder
+    const grid = document.getElementById('classes-grid');
+    try {
+      const r = await fetch(API + '/api/model/status');
+      const d = await r.json();
+      if (d.classes && d.classes.length) {
+        grid.innerHTML = d.classes.map(c => `
+          <div class="class-chip">
+            <span class="chip-count">✓</span>
+            <span class="chip-label">${c}</span>
+          </div>`).join('');
+      } else {
+        grid.innerHTML = '<span style="font-family:var(--mono);font-size:12px;color:var(--muted)">Žádné třídy – nejprve nahrajte videa</span>';
+      }
+    } catch(e) {
+      grid.innerHTML = '<span style="font-family:var(--mono);font-size:12px;color:var(--muted)">Backend nedostupný</span>';
+    }
+  }
+
+  // Init
+  refreshModelStatus();
+  refreshClasses();
+</script>
+</body>
+</html>

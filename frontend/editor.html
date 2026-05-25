@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ExitNav – Editor grafu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0c0e; --surface:#111418; --border:#1e2530;
+      --accent:#ff4d1c; --accent2:#ffb800; --ok:#00e87a;
+      --text:#e8eaed; --muted:#5a6270;
+      --mono:'Share Tech Mono',monospace; --sans:'Barlow Condensed',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+    #header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;background:var(--bg);border-bottom:1px solid var(--border);}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:34px;height:34px;background:var(--accent);clip-path:polygon(50% 0%,100% 100%,0% 100%);}
+    .logo-text{font-size:22px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;}
+    .logo-text span{color:var(--accent);}
+    .nav-links{display:flex;gap:12px;}
+    .nav-links a{font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:0.08em;text-transform:uppercase;padding:4px 8px;border:1px solid transparent;border-radius:4px;transition:all 0.2s;}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);border-color:var(--border);}
+
+    #main{flex:1;display:grid;grid-template-columns:280px 1fr;overflow:hidden;}
+
+    /* Sidebar */
+    #sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:16px;gap:16px;}
+    .section-title{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
+
+    .form-group{display:flex;flex-direction:column;gap:6px;}
+    .form-group label{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.05em;}
+    input,select{
+      background:var(--bg);border:1px solid var(--border);border-radius:6px;
+      padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;
+      outline:none;width:100%;transition:border 0.2s;
+    }
+    input:focus,select:focus{border-color:var(--accent2);}
+    select option{background:var(--bg);}
+
+    .btn{
+      width:100%;padding:10px;border:none;border-radius:8px;cursor:pointer;
+      font-family:var(--sans);font-size:15px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+      transition:all 0.2s;
+    }
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-primary:hover{filter:brightness(1.1);}
+    .btn-secondary{background:var(--border);color:var(--text);}
+    .btn-secondary:hover{background:#2a3040;}
+    .btn-ok{background:#0a2a18;color:var(--ok);border:1px solid var(--ok);}
+    .btn-ok:hover{background:#0f3a22;}
+    .btn-danger{background:#2a0a08;color:var(--accent);border:1px solid var(--accent);}
+
+    .separator{height:1px;background:var(--border);}
+
+    /* Node list */
+    #node-list{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;}
+    .node-item{
+      display:flex;align-items:center;justify-content:space-between;
+      background:var(--bg);border:1px solid var(--border);border-radius:6px;
+      padding:7px 10px;font-family:var(--mono);font-size:12px;cursor:pointer;
+      transition:border-color 0.2s;
+    }
+    .node-item:hover{border-color:var(--accent2);}
+    .node-item.selected{border-color:var(--accent2);background:#1a1400;}
+    .node-badge{
+      font-size:9px;padding:2px 6px;border-radius:10px;letter-spacing:0.08em;
+    }
+    .badge-exit{background:#0a2a18;color:var(--ok);}
+    .badge-room{background:#1a1e26;color:var(--muted);}
+    .badge-stair{background:#1a1200;color:var(--accent2);}
+    .node-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:0 4px;transition:color 0.2s;}
+    .node-del:hover{color:var(--accent);}
+
+    /* Canvas */
+    #canvas-wrap{position:relative;overflow:hidden;background:var(--bg);}
+    #graph-canvas{display:block;width:100%;height:100%;cursor:crosshair;}
+    #canvas-hint{
+      position:absolute;bottom:16px;right:16px;
+      font-family:var(--mono);font-size:11px;color:var(--muted);
+      background:rgba(10,12,14,0.8);padding:8px 14px;border-radius:6px;border:1px solid var(--border);
+      pointer-events:none;
+    }
+
+    /* Toast */
+    #toast{
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+      background:var(--surface);border:1px solid var(--ok);border-radius:8px;
+      padding:10px 20px;font-family:var(--mono);font-size:13px;color:var(--ok);
+      transition:transform 0.3s;z-index:100;
+    }
+    #toast.show{transform:translateX(-50%) translateY(0);}
+  </style>
+</head>
+<body>
+<div id="header">
+  <div class="logo">
+    <div class="logo-icon"></div>
+    <div class="logo-text">Exit<span>Nav</span></div>
+  </div>
+  <div class="nav-links">
+    <a href="index.html">Kamera</a>
+    <a href="editor.html" class="active">Editor</a>
+    <a href="train.html">Trénink</a>
+  </div>
+  <div style="width:9px"></div>
+</div>
+
+<div id="main">
+  <div id="sidebar">
+    <!-- Add node -->
+    <div>
+      <div class="section-title">Přidat uzel</div>
+      <div class="form-group">
+        <label>ID uzlu</label>
+        <input id="in-id" placeholder="ucebna_101" />
+      </div>
+      <div class="form-group" style="margin-top:8px">
+        <label>Název (label)</label>
+        <input id="in-label" placeholder="Učebna 101" />
+      </div>
+      <div class="form-group" style="margin-top:8px">
+        <label>Typ</label>
+        <select id="in-type">
+          <option value="room">Místnost</option>
+          <option value="exit">Nouzový exit</option>
+          <option value="stair">Schodiště</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:8px">
+        <label>Podlaží</label>
+        <input id="in-floor" type="number" value="0" min="0" max="10" />
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="addNode()">+ Přidat uzel</button>
+    </div>
+
+    <div class="separator"></div>
+
+    <!-- Add edge -->
+    <div>
+      <div class="section-title">Přidat hranu</div>
+      <div class="form-group">
+        <label>Z uzlu</label>
+        <select id="in-from"></select>
+      </div>
+      <div class="form-group" style="margin-top:8px">
+        <label>Do uzlu</label>
+        <select id="in-to"></select>
+      </div>
+      <div class="form-group" style="margin-top:8px">
+        <label>Váha (vzdálenost)</label>
+        <input id="in-weight" type="number" value="1" min="1" />
+      </div>
+      <button class="btn btn-secondary" style="margin-top:12px" onclick="addEdge()">Přidat hranu</button>
+    </div>
+
+    <div class="separator"></div>
+
+    <!-- Node list -->
+    <div>
+      <div class="section-title">Uzly (<span id="node-count">0</span>)</div>
+      <div id="node-list"></div>
+    </div>
+
+    <div class="separator"></div>
+
+    <!-- Save / Load -->
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-ok" onclick="saveGraph()">💾 Uložit do backendu</button>
+      <button class="btn btn-secondary" onclick="loadGraph()">↓ Načíst z backendu</button>
+      <button class="btn btn-danger" onclick="clearAll()">✕ Vymazat vše</button>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <div id="canvas-wrap">
+    <canvas id="graph-canvas"></canvas>
+    <div id="canvas-hint">Klik = přesun uzlu &nbsp;|&nbsp; Hrana = vyberte oba uzly</div>
+  </div>
+</div>
+
+<div id="toast">✓ Graf uložen</div>
+
+<script>
+  const API = '';
+  const canvas = document.getElementById('graph-canvas');
+  const ctx    = canvas.getContext('2d');
+
+  let graph = { nodes: {}, edges: [] };
+  let positions = {};     // nodeId → {x, y}
+  let dragging  = null;   // nodeId being dragged
+  let dragOffset = {x:0, y:0};
+  let selectedNode = null;
+
+  // ---- Layout helpers ----------------------------------------
+  function resizeCanvas() {
+    const wrap = document.getElementById('canvas-wrap');
+    canvas.width  = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
+    draw();
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  function autoLayout() {
+    const ids = Object.keys(graph.nodes);
+    if (!ids.length) return;
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const r  = Math.min(cx, cy) * 0.7;
+    ids.forEach((id, i) => {
+      if (!positions[id]) {
+        const angle = (2 * Math.PI * i) / ids.length - Math.PI / 2;
+        positions[id] = { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+      }
+    });
+  }
+
+  // ---- Draw ---------------------------------------------------
+  const NODE_R = 22;
+  const TYPE_COLORS = { exit: '#00e87a', stair: '#ffb800', room: '#5a6270' };
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Grid
+    ctx.strokeStyle = '#111418'; ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+    for (let y = 0; y < canvas.height; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+
+    // Edges
+    graph.edges.forEach(edge => {
+      const a = positions[edge.from], b = positions[edge.to];
+      if (!a || !b) return;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = '#2a3040'; ctx.lineWidth = 2;
+      ctx.stroke();
+      // Weight label
+      ctx.fillStyle = '#3a4555'; ctx.font = '11px Share Tech Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText(edge.weight, (a.x+b.x)/2, (a.y+b.y)/2 - 6);
+    });
+
+    // Nodes
+    Object.keys(graph.nodes).forEach(id => {
+      const pos = positions[id]; if (!pos) return;
+      const node = graph.nodes[id];
+      const color = TYPE_COLORS[node.type] || '#5a6270';
+      const isSelected = id === selectedNode;
+
+      // Glow for exits
+      if (node.type === 'exit') {
+        ctx.shadowBlur = 20; ctx.shadowColor = color;
+      } else { ctx.shadowBlur = 0; }
+
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, NODE_R, 0, Math.PI*2);
+      ctx.fillStyle = isSelected ? '#1a2030' : '#0e1218';
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = isSelected ? 3 : 2;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Label
+      ctx.fillStyle = '#e8eaed';
+      ctx.font = 'bold 10px Share Tech Mono';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const shortLabel = id.length > 10 ? id.slice(0,9)+'…' : id;
+      ctx.fillText(shortLabel, pos.x, pos.y);
+
+      // Floor indicator
+      if (node.floor !== undefined) {
+        ctx.fillStyle = color; ctx.font = '9px Share Tech Mono';
+        ctx.fillText('P' + node.floor, pos.x, pos.y + NODE_R + 12);
+      }
+    });
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // ---- Mouse events ------------------------------------------
+  canvas.addEventListener('mousedown', e => {
+    const {ox, oy} = canvasXY(e);
+    for (const id of Object.keys(positions)) {
+      const p = positions[id];
+      if (Math.hypot(ox-p.x, oy-p.y) < NODE_R + 4) {
+        dragging = id; dragOffset = {x: ox-p.x, y: oy-p.y};
+        selectedNode = id;
+        highlightNodeItem(id);
+        draw(); return;
+      }
+    }
+    selectedNode = null; draw();
+  });
+  canvas.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const {ox, oy} = canvasXY(e);
+    positions[dragging] = { x: ox - dragOffset.x, y: oy - dragOffset.y };
+    draw();
+  });
+  canvas.addEventListener('mouseup', () => { dragging = null; });
+
+  function canvasXY(e) {
+    const rect = canvas.getBoundingClientRect();
+    return { ox: e.clientX - rect.left, oy: e.clientY - rect.top };
+  }
+
+  // ---- Graph operations --------------------------------------
+  function addNode() {
+    const id    = document.getElementById('in-id').value.trim();
+    const label = document.getElementById('in-label').value.trim() || id;
+    const type  = document.getElementById('in-type').value;
+    const floor = parseInt(document.getElementById('in-floor').value) || 0;
+    if (!id) { alert('Zadejte ID uzlu'); return; }
+    if (graph.nodes[id]) { alert('Uzel s tímto ID již existuje'); return; }
+    graph.nodes[id] = { label, type, floor };
+    autoLayout();
+    refreshUI();
+    document.getElementById('in-id').value = '';
+    document.getElementById('in-label').value = '';
+  }
+
+  function addEdge() {
+    const from   = document.getElementById('in-from').value;
+    const to     = document.getElementById('in-to').value;
+    const weight = parseFloat(document.getElementById('in-weight').value) || 1;
+    if (!from || !to || from === to) { alert('Vyberte dva různé uzly'); return; }
+    const dup = graph.edges.find(e => (e.from===from&&e.to===to)||(e.from===to&&e.to===from));
+    if (dup) { alert('Hrana již existuje'); return; }
+    graph.edges.push({ from, to, weight });
+    refreshUI();
+  }
+
+  function deleteNode(id) {
+    delete graph.nodes[id];
+    delete positions[id];
+    graph.edges = graph.edges.filter(e => e.from !== id && e.to !== id);
+    if (selectedNode === id) selectedNode = null;
+    refreshUI();
+  }
+
+  function clearAll() {
+    if (!confirm('Vymazat celý graf?')) return;
+    graph = { nodes: {}, edges: [] };
+    positions = {};
+    selectedNode = null;
+    refreshUI();
+  }
+
+  function refreshUI() {
+    // Update node list
+    const list = document.getElementById('node-list');
+    list.innerHTML = '';
+    document.getElementById('node-count').textContent = Object.keys(graph.nodes).length;
+    Object.entries(graph.nodes).forEach(([id, node]) => {
+      const div = document.createElement('div');
+      div.className = 'node-item' + (id === selectedNode ? ' selected' : '');
+      div.innerHTML = `
+        <span>${id}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="node-badge badge-${node.type}">${node.type}</span>
+          <button class="node-del" onclick="deleteNode('${id}')">✕</button>
+        </div>`;
+      div.onclick = (e) => { if (e.target.classList.contains('node-del')) return; selectedNode = id; highlightNodeItem(id); draw(); };
+      list.appendChild(div);
+    });
+
+    // Update selects
+    ['in-from','in-to'].forEach(sid => {
+      const sel = document.getElementById(sid);
+      const cur = sel.value;
+      sel.innerHTML = Object.keys(graph.nodes).map(id => `<option value="${id}">${id}</option>`).join('');
+      if (cur) sel.value = cur;
+    });
+
+    autoLayout();
+    draw();
+  }
+
+  function highlightNodeItem(id) {
+    document.querySelectorAll('.node-item').forEach(el => el.classList.remove('selected'));
+    const items = document.querySelectorAll('.node-item');
+    items.forEach(el => { if (el.querySelector('span')?.textContent === id) el.classList.add('selected'); });
+  }
+
+  // ---- API ---------------------------------------------------
+  async function saveGraph() {
+    try {
+      const r = await fetch(API + '/api/graph', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(graph)
+      });
+      if (!r.ok) throw new Error(await r.text());
+      showToast('✓ Graf uložen do backendu');
+    } catch(e) { showToast('✕ Chyba: ' + e.message); }
+  }
+
+  async function loadGraph() {
+    try {
+      const r = await fetch(API + '/api/graph');
+      if (!r.ok) throw new Error('Graf nenalezen');
+      graph = await r.json();
+      positions = {};
+      autoLayout();
+      refreshUI();
+      showToast('↓ Graf načten');
+    } catch(e) { showToast('✕ ' + e.message); }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ---- Init ---------------------------------------------------
+  resizeCanvas();
+  loadGraph().catch(() => {});
+  refreshUI();
+</script>
+</body>
+</html>

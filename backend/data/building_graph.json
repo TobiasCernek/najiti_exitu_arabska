@@ -1,0 +1,26 @@
+{
+  "nodes": {
+    "vchod_hlavni":   { "label": "Hlavní vchod",      "type": "exit",  "floor": 0 },
+    "chodba_prizemí": { "label": "Chodba přízemí",    "type": "room",  "floor": 0 },
+    "schodiste_A":    { "label": "Schodiště A",        "type": "stair", "floor": 0 },
+    "schodiste_B":    { "label": "Schodiště B",        "type": "stair", "floor": 0 },
+    "ucebna_101":     { "label": "Učebna 101",         "type": "room",  "floor": 1 },
+    "ucebna_102":     { "label": "Učebna 102",         "type": "room",  "floor": 1 },
+    "chodba_1np":     { "label": "Chodba 1. NP",       "type": "room",  "floor": 1 },
+    "exit_bocni":     { "label": "Boční nouzový exit", "type": "exit",  "floor": 0 },
+    "ucebna_201":     { "label": "Učebna 201",         "type": "room",  "floor": 2 },
+    "chodba_2np":     { "label": "Chodba 2. NP",       "type": "room",  "floor": 2 }
+  },
+  "edges": [
+    { "from": "vchod_hlavni",   "to": "chodba_prizemí", "weight": 1 },
+    { "from": "chodba_prizemí", "to": "schodiste_A",    "weight": 2 },
+    { "from": "chodba_prizemí", "to": "schodiste_B",    "weight": 3 },
+    { "from": "chodba_prizemí", "to": "exit_bocni",     "weight": 4 },
+    { "from": "schodiste_A",    "to": "chodba_1np",     "weight": 2 },
+    { "from": "schodiste_B",    "to": "chodba_1np",     "weight": 2 },
+    { "from": "chodba_1np",     "to": "ucebna_101",     "weight": 1 },
+    { "from": "chodba_1np",     "to": "ucebna_102",     "weight": 1 },
+    { "from": "schodiste_A",    "to": "chodba_2np",     "weight": 2 },
+    { "from": "chodba_2np",     "to": "ucebna_201",     "weight": 1 }
+  ]
+}
