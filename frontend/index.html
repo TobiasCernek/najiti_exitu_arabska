@@ -1,180 +1,232 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ExitNav</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <title>ExitNav – Kamera</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
   <style>
-    :root {
-      --bg: #0a0c0e;
-      --surface: #111418;
-      --border: #1e2530;
-      --accent: #ff4d1c;
-      --accent2: #ffb800;
-      --ok: #00e87a;
-      --text: #e8eaed;
-      --muted: #5a6270;
-      --mono: 'Share Tech Mono', monospace;
-      --sans: 'Barlow Condensed', sans-serif;
+    :root{
+      --bg:#060c0a;--surface:#0d1a14;--border:#162a1e;
+      --accent:#00e87a;--accent2:#00ff99;--warn:#ffb800;--danger:#ff4d1c;
+      --text:#e8f5ee;--muted:#4a7060;
+      --mono:'Share Tech Mono',monospace;--sans:'Barlow Condensed',sans-serif;
     }
-    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--sans); }
-    #app { display:flex; flex-direction:column; height:100dvh; }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans);}
+    #app{display:flex;flex-direction:column;height:100dvh;}
 
     /* Header */
-    #header {
-      flex-shrink:0; display:flex; align-items:center; justify-content:space-between;
-      padding:14px 20px 10px; background:var(--bg); border-bottom:1px solid var(--border); z-index:10;
+    #header{
+      flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+      padding:10px 16px 8px;background:var(--bg);border-bottom:1px solid var(--border);z-index:10;
     }
-    .logo { display:flex; align-items:center; gap:10px; }
-    .logo-icon {
-      width:34px; height:34px; background:var(--accent);
-      clip-path:polygon(50% 0%,100% 100%,0% 100%);
-      display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px;
+    .logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:inherit;}
+    .logo-icon{width:28px;height:28px;background:var(--accent);clip-path:polygon(50% 0%,100% 100%,0% 100%);position:relative;flex-shrink:0;}
+    .logo-icon::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:6px;background:var(--bg);border-radius:1px;}
+    .logo-text{font-size:18px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;}
+    .logo-text span{color:var(--accent);}
+    .header-right{display:flex;align-items:center;gap:8px;}
+    .nav-lnk{
+      font-family:var(--mono);font-size:10px;color:var(--muted);text-decoration:none;
+      padding:4px 10px;border:1px solid var(--border);border-radius:4px;
+      letter-spacing:0.07em;text-transform:uppercase;transition:all 0.2s;
     }
-    .logo-icon::after { content:''; width:6px; height:10px; background:#fff; border-radius:1px; }
-    .logo-text { font-size:22px; font-weight:900; letter-spacing:0.08em; text-transform:uppercase; }
-    .logo-text span { color:var(--accent); }
-    .nav-links { display:flex; gap:12px; }
-    .nav-links a {
-      font-family:var(--mono); font-size:11px; color:var(--muted); text-decoration:none;
-      letter-spacing:0.08em; text-transform:uppercase; padding:4px 8px;
-      border:1px solid transparent; border-radius:4px; transition:all 0.2s;
-    }
-    .nav-links a:hover { color:var(--text); border-color:var(--border); }
+    .nav-lnk:hover{color:var(--accent);border-color:var(--accent);}
+    #status-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);transition:all 0.3s;flex-shrink:0;}
+    #status-dot.active{background:var(--accent);box-shadow:0 0 0 3px rgba(0,232,122,0.2);animation:pOk 2s infinite;}
+    #status-dot.scanning{background:var(--warn);box-shadow:0 0 0 3px rgba(255,184,0,0.2);animation:pWarn 1s infinite;}
+    @keyframes pOk{50%{box-shadow:0 0 0 8px rgba(0,232,122,0.06),0 0 18px rgba(0,232,122,0.5);}}
+    @keyframes pWarn{50%{box-shadow:0 0 0 8px rgba(255,184,0,0.06);}}
 
-    #status-dot {
-      width:9px; height:9px; border-radius:50%; background:var(--muted);
-      transition:background 0.3s,box-shadow 0.3s;
-    }
-    #status-dot.active   { background:var(--ok);     box-shadow:0 0 0 4px rgba(0,232,122,0.18); animation:pOk 2s infinite; }
-    #status-dot.scanning { background:var(--accent2); box-shadow:0 0 0 4px rgba(255,184,0,0.18); animation:pWarn 1s infinite; }
-    @keyframes pOk   { 50%{ box-shadow:0 0 0 8px rgba(0,232,122,0.06),0 0 20px rgba(0,232,122,0.6); } }
-    @keyframes pWarn { 50%{ box-shadow:0 0 0 8px rgba(255,184,0,0.05); } }
-
-    /* Camera */
-    #camera-wrap { flex:1; position:relative; overflow:hidden; background:#000; }
-    #video { width:100%; height:100%; object-fit:cover; display:block; }
-    #capture-canvas { display:none; }
+    /* Camera area */
+    #camera-wrap{flex:1;position:relative;overflow:hidden;background:#000;min-height:0;}
+    #video{width:100%;height:100%;object-fit:cover;display:block;}
+    #capture-canvas{display:none;}
 
     /* Scan overlay */
-    #scan-overlay { position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity 0.3s; }
-    #scan-overlay.visible { opacity:1; }
-    .scan-line {
-      position:absolute; left:0; right:0; height:2px;
-      background:linear-gradient(90deg,transparent,var(--accent2),transparent);
-      box-shadow:0 0 12px var(--accent2),0 0 30px rgba(255,184,0,0.3);
-      animation:scanMove 1.2s ease-in-out infinite;
+    #scan-overlay{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 0.3s;}
+    #scan-overlay.visible{opacity:1;}
+    .scan-line{
+      position:absolute;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,var(--accent),transparent);
+      box-shadow:0 0 10px var(--accent),0 0 24px rgba(0,232,122,0.3);
+      animation:scanMove 1.6s ease-in-out infinite;
     }
-    @keyframes scanMove { 0%{top:5%;opacity:0} 10%{opacity:1} 90%{opacity:1} 100%{top:95%;opacity:0} }
-    .corner { position:absolute; width:36px; height:36px; border-color:var(--accent); border-style:solid; }
-    .corner-tl { top:16px;    left:16px;   border-width:3px 0 0 3px; }
-    .corner-tr { top:16px;    right:16px;  border-width:3px 3px 0 0; }
-    .corner-bl { bottom:16px; left:16px;   border-width:0 0 3px 3px; }
-    .corner-br { bottom:16px; right:16px;  border-width:0 3px 3px 0; }
+    @keyframes scanMove{0%{top:5%;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:95%;opacity:0}}
+    .corner{position:absolute;width:28px;height:28px;border-color:var(--accent);border-style:solid;}
+    .corner-tl{top:12px;left:12px;border-width:2px 0 0 2px;}
+    .corner-tr{top:12px;right:12px;border-width:2px 2px 0 0;}
+    .corner-bl{bottom:12px;left:12px;border-width:0 0 2px 2px;}
+    .corner-br{bottom:12px;right:12px;border-width:0 2px 2px 0;}
 
-    /* Room label overlay */
-    #room-label {
-      position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
-      background:rgba(0,0,0,0.82); border:1px solid var(--accent2);
-      padding:8px 20px; border-radius:24px;
-      font-family:var(--mono); font-size:13px; color:var(--accent2);
-      letter-spacing:0.1em; white-space:nowrap;
-      opacity:0; transition:opacity 0.4s;
+    /* Room chip – top center */
+    #room-chip{
+      position:absolute;top:14px;left:50%;transform:translateX(-50%);
+      background:rgba(6,12,10,0.88);border:1px solid var(--accent);
+      padding:5px 16px;border-radius:20px;
+      font-family:var(--mono);font-size:11px;color:var(--accent);
+      letter-spacing:0.1em;white-space:nowrap;
+      opacity:0;transition:opacity 0.4s;pointer-events:none;
+      max-width:80%;overflow:hidden;text-overflow:ellipsis;
     }
-    #room-label.visible { opacity:1; }
+    #room-chip.visible{opacity:1;}
+
+    #activity-panel{
+      position:absolute;top:58px;left:50%;transform:translateX(-50%);
+      width:min(440px,calc(100% - 24px));
+      background:rgba(8,10,13,0.78);border:1px solid var(--border);
+      border-radius:10px;padding:10px 12px;backdrop-filter:blur(14px);
+      display:none;flex-direction:column;gap:8px;pointer-events:none;
+    }
+    #activity-panel.visible{display:flex;}
+    .activity-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+    #activity-text{font-family:var(--mono);font-size:10px;color:var(--text);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    #activity-sub{font-family:var(--mono);font-size:10px;color:var(--muted);}
+    .activity-dots{display:flex;gap:4px;flex-shrink:0;}
+    .activity-dots span{width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.3;animation:dotPulse 1.2s infinite;}
+    .activity-dots span:nth-child(2){animation-delay:.15s;}
+    .activity-dots span:nth-child(3){animation-delay:.3s;}
+    @keyframes dotPulse{50%{opacity:1;transform:translateY(-2px);}}
+    .activity-track{height:3px;border-radius:3px;background:var(--border);overflow:hidden;}
+    #activity-bar{height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .25s ease;}
+
+    /* Navigation panel overlay */
+    #nav-overlay{
+      position:absolute;inset:0;pointer-events:none;
+      display:flex;align-items:flex-end;justify-content:center;
+      padding-bottom:12px;
+      opacity:0;transition:opacity 0.4s;
+    }
+    #nav-overlay.visible{opacity:1;}
+    #nav-panel{
+      width:calc(100% - 20px);max-width:500px;
+      background:rgba(5,10,8,0.94);
+      border:1px solid var(--accent);border-radius:14px;
+      padding:14px 16px;
+      backdrop-filter:blur(14px);
+      box-shadow:0 0 40px rgba(0,232,122,0.2),inset 0 0 0 1px rgba(0,232,122,0.04);
+    }
+    .nav-header{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);
+    }
+    .nav-title{
+      font-family:var(--mono);font-size:10px;color:var(--accent);
+      letter-spacing:0.14em;text-transform:uppercase;
+      display:flex;align-items:center;gap:7px;
+    }
+    .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pOk 1.5s infinite;}
+    .nav-dist{font-family:var(--mono);font-size:10px;color:var(--muted);}
+
+    .nav-steps{display:flex;flex-direction:column;gap:0;max-height:150px;overflow-y:auto;scrollbar-width:none;}
+    .nav-steps::-webkit-scrollbar{display:none;}
+    .nav-step{
+      display:flex;align-items:flex-start;gap:10px;
+      font-size:14px;color:var(--text);
+      padding:7px 0;border-bottom:1px solid rgba(22,42,30,0.7);
+      line-height:1.3;
+    }
+    .nav-step:last-child{border:none;color:var(--accent);font-weight:600;}
+    .nav-step-num{font-family:var(--mono);font-size:9px;color:var(--muted);min-width:18px;margin-top:2px;}
 
     /* Placeholder */
-    #placeholder {
-      position:absolute; inset:0;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      gap:20px; background:var(--bg);
+    #placeholder{
+      position:absolute;inset:0;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:20px;background:var(--bg);
     }
-    .ph-icon { width:80px; height:80px; border:2px dashed var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; }
-    .ph-icon svg { opacity:0.3; }
-    #placeholder p { font-size:15px; color:var(--muted); text-align:center; max-width:240px; line-height:1.6; }
+    .ph-ring{
+      width:80px;height:80px;border:2px dashed var(--border);border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+    }
+    #placeholder p{font-size:14px;color:var(--muted);text-align:center;max-width:220px;line-height:1.65;}
 
-    /* Perm error */
-    #perm-error { display:none; position:absolute; inset:0; background:var(--bg); align-items:center; justify-content:center; flex-direction:column; gap:14px; text-align:center; padding:40px; }
-    #perm-error.show { display:flex; }
-    #perm-error h2 { font-size:20px; font-weight:700; color:var(--accent); letter-spacing:0.06em; text-transform:uppercase; }
-    #perm-error p { font-size:14px; color:var(--muted); line-height:1.6; }
+    /* Permission error */
+    #perm-error{
+      display:none;position:absolute;inset:0;background:var(--bg);
+      align-items:center;justify-content:center;flex-direction:column;
+      gap:14px;text-align:center;padding:40px;
+    }
+    #perm-error.show{display:flex;}
+    #perm-error .err-icon{font-size:40px;}
+    #perm-error h2{font-size:18px;font-weight:700;color:var(--danger);letter-spacing:0.06em;text-transform:uppercase;}
+    #perm-error p{font-size:13px;color:var(--muted);line-height:1.6;max-width:240px;}
 
     /* Bottom panel */
-    #bottom { flex-shrink:0; background:var(--surface); border-top:1px solid var(--border); padding:16px 20px 24px; display:flex; flex-direction:column; gap:12px; }
-
-    /* Stats */
-    #stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-    .stat-box { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
-    .stat-label { font-family:var(--mono); font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; }
-    .stat-value { font-family:var(--mono); font-size:18px; color:var(--text); line-height:1; }
-    .stat-value.ok   { color:var(--ok); }
-    .stat-value.warn { color:var(--accent2); }
-    .stat-value.dim  { color:var(--muted); }
-
-    /* Nav result */
-    #nav-result {
-      background:var(--bg); border:1px solid var(--border); border-radius:8px;
-      padding:12px 14px; display:none; flex-direction:column; gap:6px;
+    #bottom{
+      flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);
+      padding:10px 14px 18px;display:flex;flex-direction:column;gap:9px;
     }
-    #nav-result.visible { display:flex; }
-    .nav-header { display:flex; align-items:center; justify-content:space-between; }
-    .nav-title { font-family:var(--mono); font-size:10px; color:var(--ok); letter-spacing:0.1em; text-transform:uppercase; }
-    .nav-dist  { font-family:var(--mono); font-size:10px; color:var(--muted); }
-    #nav-steps { display:flex; flex-direction:column; gap:3px; max-height:80px; overflow-y:auto; scrollbar-width:none; }
-    #nav-steps::-webkit-scrollbar { display:none; }
-    .nav-step { font-size:13px; color:var(--text); line-height:1.4; padding:2px 0; border-bottom:1px solid var(--border); }
-    .nav-step:last-child { border:none; }
 
-    /* Thumb strip */
-    #log-strip { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding:2px; min-height:44px; }
-    #log-strip::-webkit-scrollbar { display:none; }
-    .thumb { flex-shrink:0; width:54px; height:40px; border-radius:5px; overflow:hidden; border:1px solid var(--border); position:relative; background:var(--bg); }
-    .thumb img { width:100%; height:100%; object-fit:cover; }
-    .thumb .ts { position:absolute; bottom:2px; right:3px; font-family:var(--mono); font-size:7px; color:rgba(255,255,255,0.7); }
-    .thumb.new { border-color:var(--accent2); box-shadow:0 0 6px rgba(255,184,0,0.4); animation:thumbPop 0.3s ease; }
-    @keyframes thumbPop { 0%{transform:scale(0.7);opacity:0} 70%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
-
-    /* Button */
-    #btn-start {
-      width:100%; padding:16px; border:none; border-radius:10px;
-      background:var(--accent); color:#fff;
-      font-family:var(--sans); font-size:17px; font-weight:700;
-      letter-spacing:0.12em; text-transform:uppercase;
-      cursor:pointer; transition:background 0.2s,transform 0.1s;
+    /* Stats row */
+    #stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+    .stat-box{
+      background:var(--bg);border:1px solid var(--border);border-radius:7px;
+      padding:8px 10px;display:flex;flex-direction:column;gap:2px;
     }
-    #btn-start:active { transform:scale(0.98); }
-    #btn-start.running { background:#1a2a1a; color:var(--ok); border:1px solid var(--ok); }
+    .stat-label{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
+    .stat-value{font-family:var(--mono);font-size:16px;line-height:1.1;}
+    .stat-value.ok{color:var(--accent);}
+    .stat-value.warn{color:var(--warn);}
+    .stat-value.dim{color:var(--muted);}
 
-    /* Model warning banner */
-    #model-warn {
-      display:none; background:#1a1200; border:1px solid var(--accent2);
-      border-radius:8px; padding:10px 14px;
-      font-family:var(--mono); font-size:11px; color:var(--accent2);
-      letter-spacing:0.04em; text-align:center;
+    /* Confidence bar */
+    .conf-bar-wrap{height:2px;background:var(--border);border-radius:1px;margin-top:3px;}
+    .conf-bar{height:100%;background:var(--accent);border-radius:1px;transition:width 0.4s ease;width:0;}
+    .conf-bar.warn{background:var(--warn);}
+
+    /* Thumbnail strip */
+    #log-strip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px;min-height:38px;}
+    #log-strip::-webkit-scrollbar{display:none;}
+    .thumb{flex-shrink:0;width:48px;height:36px;border-radius:5px;overflow:hidden;border:1px solid var(--border);position:relative;background:var(--bg);}
+    .thumb img{width:100%;height:100%;object-fit:cover;}
+    .thumb .ts{position:absolute;bottom:1px;right:2px;font-family:var(--mono);font-size:6px;color:rgba(255,255,255,0.6);}
+    .thumb.new{border-color:var(--accent);box-shadow:0 0 6px rgba(0,232,122,0.3);animation:thumbPop 0.3s ease;}
+    @keyframes thumbPop{0%{transform:scale(0.7);opacity:0}70%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+
+    /* Start button */
+    #btn-start{
+      width:100%;padding:13px;border:none;border-radius:9px;
+      background:var(--accent);color:#060c0a;
+      font-family:var(--sans);font-size:15px;font-weight:700;
+      letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;
+      transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;
     }
-    #model-warn.show { display:block; }
+    #btn-start:active{transform:scale(0.98);}
+    #btn-start.running{background:#0a2a18;color:var(--accent);border:1px solid var(--accent);}
+    #btn-start:disabled{opacity:0.5;cursor:not-allowed;}
+
+    /* Warning strip */
+    #model-warn{
+      display:none;background:#1a0d00;border:1px solid rgba(255,184,0,0.3);
+      border-radius:7px;padding:8px 12px;
+      font-family:var(--mono);font-size:10px;color:var(--warn);
+      letter-spacing:0.03em;text-align:center;
+    }
+    #model-warn.show{display:block;}
+    #model-warn a{color:var(--warn);}
   </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
 </head>
 <body>
 <div id="app">
   <div id="header">
-    <div class="logo">
+    <a href="/" class="logo">
       <div class="logo-icon"></div>
       <div class="logo-text">Exit<span>Nav</span></div>
+    </a>
+    <div class="header-right">
+      <a href="/" class="nav-lnk">← Domů</a>
+      <a href="/admin" class="nav-lnk">Admin</a>
+      <div id="status-dot"></div>
     </div>
-    <div class="nav-links">
-      <a href="editor.html">Editor</a>
-      <a href="train.html">Trénink</a>
-    </div>
-    <div id="status-dot"></div>
   </div>
 
   <div id="camera-wrap">
     <video id="video" autoplay playsinline muted></video>
     <canvas id="capture-canvas"></canvas>
+
     <div id="scan-overlay">
       <div class="corner corner-tl"></div>
       <div class="corner corner-tr"></div>
@@ -182,25 +234,49 @@
       <div class="corner corner-br"></div>
       <div class="scan-line"></div>
     </div>
-    <div id="room-label">— IDENTIFIKACE —</div>
+
+    <div id="room-chip">— IDENTIFIKACE —</div>
+    <div id="activity-panel">
+      <div class="activity-row">
+        <div id="activity-text">Čekám na spuštění</div>
+        <div class="activity-dots"><span></span><span></span><span></span></div>
+      </div>
+      <div id="activity-sub">Systém po spuštění průběžně odesílá snímky a vyhodnocuje místnost.</div>
+      <div class="activity-track"><div id="activity-bar"></div></div>
+    </div>
+
+    <div id="nav-overlay">
+      <div id="nav-panel">
+        <div class="nav-header">
+          <div class="nav-title">
+            <div class="nav-dot"></div>
+            Nejbližší nouzový exit
+          </div>
+          <div class="nav-dist" id="nav-dist"></div>
+        </div>
+        <div class="nav-steps" id="nav-steps"></div>
+      </div>
+    </div>
+
     <div id="placeholder">
-      <div class="ph-icon">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="20" cy="20" r="10" stroke="white" stroke-width="2"/>
-          <path d="M6 14V10a2 2 0 012-2h4M30 8h4a2 2 0 012 2v4M34 26v4a2 2 0 01-2 2h-4M10 32H6a2 2 0 01-2-2v-4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <div class="ph-ring">
+        <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="9" stroke="#4a7060" stroke-width="2"/>
+          <path d="M6 14V10a2 2 0 012-2h4M30 8h4a2 2 0 012 2v4M34 26v4a2 2 0 01-2 2h-4M10 32H6a2 2 0 01-2-2v-4" stroke="#4a7060" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </div>
-      <p>Stiskněte <strong style="color:var(--text)">Spustit snímání</strong> pro zapnutí kamery a zahájení navigace.</p>
+      <p>Stiskněte <strong style="color:var(--text)">Spustit snímání</strong> pro zapnutí kamery a navigaci k exitu.</p>
     </div>
+
     <div id="perm-error">
-      <h2>Přístup odepřen</h2>
-      <p>Aplikace potřebuje přístup ke kameře.<br/>Povolte přístup v nastavení prohlížeče.</p>
+      <div class="err-icon">🚫</div>
+      <h2>Kamera odepřena</h2>
+      <p>Povolte přístup ke kameře v nastavení prohlížeče a obnovte stránku.</p>
     </div>
   </div>
 
   <div id="bottom">
-    <div id="model-warn">⚠ Model není natrénován – jděte do sekce Trénink</div>
-
+    <div id="model-warn">⚠ Model není natrénován – <a href="/admin">Admin → Trénink</a></div>
     <div id="stats-row">
       <div class="stat-box">
         <div class="stat-label">Snímky</div>
@@ -213,30 +289,21 @@
       <div class="stat-box">
         <div class="stat-label">Jistota</div>
         <div class="stat-value dim" id="s-conf">—</div>
+        <div class="conf-bar-wrap"><div class="conf-bar" id="conf-bar"></div></div>
       </div>
     </div>
-
-    <div id="nav-result">
-      <div class="nav-header">
-        <span class="nav-title">🚨 Cesta k exitu</span>
-        <span class="nav-dist" id="nav-dist"></span>
-      </div>
-      <div id="nav-steps"></div>
-    </div>
-
     <div id="log-strip"></div>
-
-    <button id="btn-start">▶ Spustit snímání</button>
+    <button id="btn-start">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      Spustit snímání
+    </button>
   </div>
 </div>
 <script>
-  const API = '';  // prázdný = stejný origin; při dev serveru dej 'http://localhost:8000'
-  const FRAMES_PER_SECOND = 0.5; // 1 frame per 2 seconds to avoid spamming inference
-  const INTERVAL_MS = 1000 / FRAMES_PER_SECOND;
-  const MAX_THUMBS  = 20;
+  const INTERVAL_MS = 2200;
+  const MAX_THUMBS  = 16;
 
-  let stream = null, intervalId = null, frameCount = 0, isRunning = false;
-  let ws = null;
+  let stream=null, intervalId=null, frameCount=0, isRunning=false, ws=null;
 
   const video       = document.getElementById('video');
   const canvas      = document.getElementById('capture-canvas');
@@ -244,144 +311,170 @@
   const btnStart    = document.getElementById('btn-start');
   const statusDot   = document.getElementById('status-dot');
   const scanOverlay = document.getElementById('scan-overlay');
-  const roomLabel   = document.getElementById('room-label');
+  const roomChip    = document.getElementById('room-chip');
+  const activityPanel = document.getElementById('activity-panel');
+  const activityText = document.getElementById('activity-text');
+  const activitySub = document.getElementById('activity-sub');
+  const activityBar = document.getElementById('activity-bar');
+  const navOverlay  = document.getElementById('nav-overlay');
+  const navDist     = document.getElementById('nav-dist');
+  const navSteps    = document.getElementById('nav-steps');
   const placeholder = document.getElementById('placeholder');
   const permError   = document.getElementById('perm-error');
   const logStrip    = document.getElementById('log-strip');
   const sFrames     = document.getElementById('s-frames');
   const sRoom       = document.getElementById('s-room');
   const sConf       = document.getElementById('s-conf');
-  const navResult   = document.getElementById('nav-result');
-  const navDist     = document.getElementById('nav-dist');
-  const navSteps    = document.getElementById('nav-steps');
+  const confBar     = document.getElementById('conf-bar');
   const modelWarn   = document.getElementById('model-warn');
 
-  // Check model status on load
-  async function checkModel() {
-    try {
-      const r = await fetch(API + '/api/model/status');
-      const d = await r.json();
-      if (!d.available) modelWarn.classList.add('show');
-    } catch(e) { /* backend not reachable */ }
+  function tr(text){ return window.ExitNavI18n ? window.ExitNavI18n.t(text) : text; }
+
+  function setActivity(text, sub='', pct=0) {
+    activityPanel.classList.add('visible');
+    activityText.textContent = tr(text);
+    activitySub.textContent = tr(sub);
+    activityBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
   }
-  checkModel();
 
-  btnStart.addEventListener('click', () => isRunning ? stopCapture() : startCapture());
+  // Check model on load
+  fetch('/api/model/status').then(r=>r.json()).then(d=>{
+    if(!d.available) modelWarn.classList.add('show');
+  }).catch(()=>{});
 
-  async function startCapture() {
-    try {
+  btnStart.addEventListener('click', ()=>isRunning ? stopCapture() : startCapture());
+
+  async function startCapture(){
+    btnStart.disabled = true;
+    try{
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
+        video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},
+        audio:false
       });
       video.srcObject = stream;
       await video.play();
-      video.addEventListener('loadedmetadata', () => {
-        canvas.width  = video.videoWidth;
+      video.addEventListener('loadedmetadata', ()=>{
+        canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-      }, { once: true });
+      }, {once:true});
 
       isRunning = true; frameCount = 0;
       placeholder.style.display = 'none';
       permError.classList.remove('show');
       statusDot.className = 'scanning';
       scanOverlay.classList.add('visible');
-      roomLabel.classList.add('visible');
-      btnStart.textContent = '■ Zastavit snímání';
+      roomChip.textContent = '— SKENOVÁNÍ —';
+      roomChip.classList.add('visible');
+      setActivity('Spouštím kameru', 'Připravuji živé snímání a spojení se serverem.', 18);
+      btnStart.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"/></svg> Zastavit snímání';
       btnStart.classList.add('running');
-
-      // Open WebSocket
+      btnStart.disabled = false;
       openWS();
-
       intervalId = setInterval(captureFrame, INTERVAL_MS);
-    } catch(err) {
+      setTimeout(captureFrame, 350);
+    }catch(err){
       placeholder.style.display = 'none';
       permError.classList.add('show');
+      btnStart.disabled = false;
     }
   }
 
-  function stopCapture() {
+  function stopCapture(){
     clearInterval(intervalId); intervalId = null;
-    if (ws) { ws.close(); ws = null; }
-    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    if(ws){ws.close(); ws = null;}
+    if(stream){stream.getTracks().forEach(t=>t.stop()); stream = null;}
     video.srcObject = null; isRunning = false;
     statusDot.className = '';
     scanOverlay.classList.remove('visible');
-    roomLabel.classList.remove('visible');
-    btnStart.textContent = '▶ Spustit snímání';
+    roomChip.classList.remove('visible');
+    activityPanel.classList.remove('visible');
+    navOverlay.classList.remove('visible');
+    btnStart.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Spustit snímání';
     btnStart.classList.remove('running');
-    navResult.classList.remove('visible');
-    sRoom.textContent = '—'; sRoom.className = 'stat-value dim';
-    sConf.textContent = '—'; sConf.className = 'stat-value dim';
+    sRoom.textContent='—'; sRoom.className='stat-value dim';
+    sConf.textContent='—'; sConf.className='stat-value dim';
+    confBar.style.width='0'; confBar.className='conf-bar';
     placeholder.style.display = 'flex';
   }
 
-  function openWS() {
-    const wsBase = API.replace('http', 'ws') || `ws://${location.host}`;
-    ws = new WebSocket(wsBase + '/ws/stream');
-    ws.onmessage = (evt) => {
-      const data = JSON.parse(evt.data);
-      if (data.error) {
-        if (data.error === 'model_not_ready') { modelWarn.classList.add('show'); }
+  function openWS(){
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(proto + '//' + location.host + '/ws/stream');
+    setActivity('Připojuji server', 'Čekám na WebSocket pro živou inferenci.', 35);
+    ws.onopen = () => setActivity('Skenování', 'Spojení je aktivní. Odesílám snímky v intervalu.', 55);
+    ws.onmessage = e => {
+      const data = JSON.parse(e.data);
+      if(data.error){
+        if(data.error === 'model_not_ready') modelWarn.classList.add('show');
+        setActivity('Model není natrénován', 'Přejděte do administrace a spusťte trénink modelu.', 100);
         return;
       }
-      handleInferResult(data);
+      handleResult(data);
     };
-    ws.onclose = () => { if (isRunning) setTimeout(openWS, 2000); };
-    ws.onerror = () => ws.close();
+    ws.onclose = () => { if(isRunning){ setActivity('Připojuji server', 'Spojení spadlo, zkouším obnovit.', 25); setTimeout(openWS, 2000); } };
+    ws.onerror = () => { setActivity('Backend nedostupný', 'Nelze navázat živou inferenci.', 100); ws.close(); };
   }
 
-  function captureFrame() {
-    if (!video.videoWidth) return;
+  function captureFrame(){
+    if(!video.videoWidth) return;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     frameCount++;
-    sFrames.textContent = frameCount; sFrames.className = 'stat-value ok';
-
+    sFrames.textContent = frameCount;
+    sFrames.className = 'stat-value ok';
     const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
     addThumb(dataUrl);
-
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ frame: dataUrl, ts: Date.now() }));
+    setActivity('Odesílám snímek', 'Snímek ' + frameCount + ' míří do modelu.', 70);
+    if(ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({frame: dataUrl, ts: Date.now()}));
+      setActivity('Vyhodnocuji snímek', 'Čekám na predikci místnosti a trasu k exitu.', 82);
     }
   }
 
-  function handleInferResult(data) {
-    const inf = data.inference;
-    const nav = data.navigation;
-
-    if (inf) {
-      const room = inf.label.replace(/_/g, ' ').toUpperCase();
+  function handleResult(data){
+    const inf = data.inference, nav = data.navigation;
+    if(inf){
+      const room = inf.label.replace(/_/g,' ').toUpperCase();
       const conf = Math.round(inf.confidence * 100);
-      sRoom.textContent = room; sRoom.className = 'stat-value ' + (conf > 70 ? 'ok' : 'warn');
-      sConf.textContent = conf + '%'; sConf.className = 'stat-value ' + (conf > 70 ? 'ok' : 'warn');
-      roomLabel.textContent = room + ' · ' + conf + '%';
+      const cls  = !inf.uncertain && conf > 70 ? 'ok' : 'warn';
+      sRoom.textContent = room; sRoom.className = 'stat-value ' + cls;
+      sConf.textContent = conf + '%'; sConf.className = 'stat-value ' + cls;
+      confBar.style.width = conf + '%';
+      confBar.className = 'conf-bar' + (cls === 'warn' ? ' warn' : '');
+      roomChip.textContent = (inf.uncertain ? 'NEJISTÉ · ' : '') + room + '  ·  ' + conf + '%';
       statusDot.className = 'active';
+      if(inf.uncertain) setActivity('Nejistý výsledek', 'Model nemá dostatečný rozdíl mezi nejlepšími třídami.', 100);
+      else setActivity('Výsledek nalezen', 'Místnost rozpoznána, počítám navigaci.', 100);
     }
-
-    if (nav && nav.instructions) {
+    if(nav && nav.instructions && !nav.error){
       navDist.textContent = 'vzdálenost: ' + nav.distance;
       navSteps.innerHTML = '';
-      nav.instructions.forEach(step => {
-        const div = document.createElement('div');
-        div.className = 'nav-step';
-        div.textContent = step;
-        navSteps.appendChild(div);
+      nav.instructions.forEach((step, i) => {
+        const d = document.createElement('div');
+        d.className = 'nav-step';
+        d.innerHTML = `<span class="nav-step-num">${i === 0 ? '' : i + '.'}</span><span>${step}</span>`;
+        navSteps.appendChild(d);
       });
-      navResult.classList.add('visible');
+      navOverlay.classList.add('visible');
+    } else if(nav && nav.error){
+      navSteps.innerHTML = `<div class="nav-step"><span class="nav-step-num"></span><span style="color:var(--warn)">⚠ Místnost "${inf?.label}" není v grafu budovy</span></div>`;
+      navDist.textContent = '';
+      navOverlay.classList.add('visible');
     }
   }
 
-  function addThumb(dataUrl) {
+  function addThumb(dataUrl){
     const now = new Date();
-    const ts  = now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
+    const ts = now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
     const div = document.createElement('div'); div.className = 'thumb new';
     const img = document.createElement('img'); img.src = dataUrl;
     const span = document.createElement('span'); span.className = 'ts'; span.textContent = ts;
     div.appendChild(img); div.appendChild(span);
     logStrip.insertBefore(div, logStrip.firstChild);
     setTimeout(() => div.classList.remove('new'), 400);
-    while (logStrip.children.length > MAX_THUMBS) logStrip.removeChild(logStrip.lastChild);
+    while(logStrip.children.length > MAX_THUMBS) logStrip.removeChild(logStrip.lastChild);
   }
 </script>
+<script src="/static/theme.js"></script>
+<script src="/static/i18n.js"></script>
 </body>
 </html>

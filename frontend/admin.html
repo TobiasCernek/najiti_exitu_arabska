@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>ExitNav – Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#060c0a;--surface:#0d1a14;--border:#162a1e;
+      --accent:#00e87a;--accent2:#00ff99;--warn:#ffb800;--danger:#ff4d1c;
+      --text:#e8f5ee;--muted:#4a7060;
+      --mono:'Share Tech Mono',monospace;--sans:'Barlow Condensed',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,232,122,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,232,122,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+
+    #app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;}
+    header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:rgba(6,12,10,0.9);backdrop-filter:blur(12px);position:sticky;top:0;z-index:10;}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;}
+    .logo-icon{width:32px;height:32px;background:var(--accent);clip-path:polygon(50% 0%,100% 100%,0% 100%);position:relative;}
+    .logo-icon::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:5px;height:8px;background:#060c0a;border-radius:1px;}
+    .logo-text{font-size:20px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;}
+    .logo-text span{color:var(--accent);}
+    .header-actions{display:flex;align-items:center;gap:10px;}
+    .nav-link{font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:none;padding:5px 12px;border:1px solid transparent;border-radius:4px;letter-spacing:0.08em;text-transform:uppercase;transition:all 0.2s;}
+    .nav-link:hover{color:var(--accent);border-color:var(--accent);}
+    #btn-logout{font-family:var(--mono);font-size:11px;color:var(--danger);padding:5px 12px;border:1px solid var(--danger);border-radius:4px;letter-spacing:0.08em;text-transform:uppercase;background:none;cursor:pointer;transition:all 0.2s;}
+    #btn-logout:hover{background:rgba(255,77,28,0.1);}
+
+    /* Login screen */
+    #login-screen{
+      flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;
+    }
+    .login-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:16px;
+      padding:40px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:24px;
+    }
+    .login-card h2{font-size:28px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;}
+    .login-card p{font-size:14px;color:var(--muted);line-height:1.5;}
+    #login-error{display:none;font-family:var(--mono);font-size:12px;color:var(--danger);padding:8px 12px;background:rgba(255,77,28,0.08);border:1px solid rgba(255,77,28,0.2);border-radius:6px;}
+    #login-error.show{display:block;}
+
+    /* Admin content */
+    #admin-content{display:none;flex:1;flex-direction:column;}
+    #admin-content.show{display:flex;}
+
+    /* Tabs */
+    .tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);padding:0 28px;}
+    .tab{
+      font-family:var(--mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;
+      padding:14px 20px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;
+      transition:all 0.2s;
+    }
+    .tab:hover{color:var(--text);}
+    .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+    .tab-panel{display:none;flex:1;padding:28px;overflow-y:auto;}
+    .tab-panel.active{display:block;}
+
+    /* Cards */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;}
+    .card-title{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+
+    /* Forms */
+    .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+    .form-group label{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.05em;}
+    input,select{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;width:100%;transition:border 0.2s;}
+    input:focus,select:focus{border-color:var(--accent);}
+    select option{background:var(--bg);}
+    .btn{padding:11px 20px;border:none;border-radius:8px;cursor:pointer;font-family:var(--sans);font-size:15px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;transition:all 0.2s;}
+    .btn-primary{background:var(--accent);color:#060c0a;}
+    .btn-primary:hover{background:var(--accent2);}
+    .btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;}
+    .btn-secondary{background:var(--border);color:var(--text);}
+    .btn-danger{background:rgba(255,77,28,0.15);color:var(--danger);border:1px solid var(--danger);}
+    .btn-full{width:100%;}
+
+    /* Drop zone */
+    .drop-zone{border:2px dashed var(--border);border-radius:10px;padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all 0.2s;text-align:center;margin-bottom:14px;}
+    .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:rgba(0,232,122,0.04);}
+    .drop-zone p{font-size:14px;color:var(--muted);}
+    .drop-zone strong{color:var(--text);}
+    .file-name{font-family:var(--mono);font-size:11px;color:var(--accent);}
+
+    /* Progress */
+    .progress-wrap{margin-top:10px;display:none;flex-direction:column;gap:5px;}
+    .progress-wrap.show{display:flex;}
+    .progress-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+    .progress-fill{height:100%;background:var(--warn);border-radius:3px;width:0%;transition:width 0.4s;}
+    .progress-fill.done{background:var(--accent);}
+    .progress-text{font-family:var(--mono);font-size:11px;color:var(--muted);}
+
+    /* Train log */
+    .train-log{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:11px;color:var(--muted);height:180px;overflow-y:auto;white-space:pre-wrap;line-height:1.6;margin-top:14px;}
+
+    /* Classes grid */
+    .classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px;}
+    .class-chip{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11px;}
+    .chip-count{color:var(--accent);font-size:16px;display:block;line-height:1;}
+    .chip-label{color:var(--muted);font-size:10px;display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+    /* Model badge */
+    .model-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;font-family:var(--mono);font-size:12px;margin-bottom:20px;}
+    .model-badge.ok{background:rgba(0,232,122,0.08);border:1px solid rgba(0,232,122,0.3);color:var(--accent);}
+    .model-badge.missing{background:rgba(255,77,28,0.08);border:1px solid rgba(255,77,28,0.3);color:var(--danger);}
+    .mbadge-dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+
+    /* Password form */
+    .success-msg{display:none;font-family:var(--mono);font-size:12px;color:var(--accent);padding:8px 12px;background:rgba(0,232,122,0.08);border:1px solid rgba(0,232,122,0.2);border-radius:6px;margin-top:8px;}
+    .success-msg.show{display:block;}
+    .error-msg{display:none;font-family:var(--mono);font-size:12px;color:var(--danger);padding:8px 12px;background:rgba(255,77,28,0.08);border:1px solid rgba(255,77,28,0.2);border-radius:6px;margin-top:8px;}
+    .error-msg.show{display:block;}
+  </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a href="/" class="logo">
+      <div class="logo-icon"></div>
+      <div class="logo-text">Exit<span>Nav</span></div>
+    </a>
+    <div class="header-actions">
+      <a href="/camera" class="nav-link">Kamera</a>
+      <button id="btn-logout" style="display:none" onclick="logout()">Odhlásit</button>
+    </div>
+  </header>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div>
+        <h2>Admin přístup</h2>
+        <p style="margin-top:6px">Zadejte heslo pro přístup do administrace.</p>
+      </div>
+      <div id="login-error">Špatné heslo. Zkuste znovu.</div>
+      <div>
+        <div class="form-group">
+          <label>Heslo</label>
+          <input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="doLogin()">Přihlásit se</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN CONTENT -->
+  <div id="admin-content">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('train')">Trénink</div>
+      <div class="tab" onclick="switchTab('editor')">Editor grafu</div>
+      <div class="tab" onclick="switchTab('settings')">Nastavení</div>
+    </div>
+
+    <!-- TRAIN TAB -->
+    <div class="tab-panel active" id="tab-train">
+
+      <div class="card">
+        <div class="card-title">Stav modelu</div>
+        <div class="model-badge missing" id="model-badge"><div class="mbadge-dot"></div><span id="model-badge-text">Model nenalezen</span></div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Natrénované třídy:</div>
+        <div class="classes-grid" id="classes-grid"><span style="font-family:var(--mono);font-size:12px;color:var(--muted)">Načítám…</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">1. Nahrát video pro třídu</div>
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('vid-input').click()">
+          <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><path d="M20 8v16M13 15l7-7 7 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 30h28" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+          <p>Přetáhněte video nebo <strong>klikněte pro výběr</strong></p>
+          <span class="file-name" id="file-name">—</span>
+        </div>
+        <input type="file" id="vid-input" accept="video/*" style="display:none" onchange="onFileSelect(this)">
+        <div class="form-group">
+          <label>Label místnosti (ID uzlu v grafu)</label>
+          <select id="in-label-select">
+            <option value="">— Vyberte existující —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nebo zadejte nové ID</label>
+          <input id="in-label-custom" placeholder="ucebna_101"/>
+        </div>
+        <div class="form-group">
+          <label>FPS extrakce</label>
+          <input id="in-fps" type="number" value="1" min="0.1" max="10" step="0.1"/>
+        </div>
+        <button class="btn btn-primary btn-full" id="btn-extract" onclick="extractFrames()" disabled>⬆ Nahrát a extrahovat</button>
+        <div class="progress-wrap" id="extract-prog">
+          <div class="progress-text" id="extract-txt">Nahrávám…</div>
+          <div class="progress-track"><div class="progress-fill" id="extract-bar"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">2. Spustit trénink</div>
+        <div class="form-group"><label>Epochy</label><input id="in-epochs" type="number" value="20" min="1"/></div>
+        <div class="form-group"><label>Batch size</label><input id="in-batch" type="number" value="16" min="1"/></div>
+        <div class="form-group"><label>Learning rate</label><input id="in-lr" type="number" value="0.0005" step="0.0001" min="0.00001"/></div>
+        <button class="btn btn-primary btn-full" id="btn-train" onclick="startTraining()">▶ Spustit trénink</button>
+        <div class="progress-wrap" id="train-prog">
+          <div class="progress-text" id="train-txt">Probíhá trénink…</div>
+          <div class="progress-track"><div class="progress-fill" id="train-bar"></div></div>
+        </div>
+        <div class="train-log" id="train-log">— zatím žádný výstup —</div>
+      </div>
+    </div>
+
+    <!-- EDITOR TAB -->
+    <div class="tab-panel" id="tab-editor">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;height:calc(100vh - 160px);display:flex;">
+        <iframe src="/editor" style="flex:1;border:none;width:100%;height:100%;" id="editor-frame"></iframe>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="tab-panel" id="tab-settings">
+      <div class="card" style="max-width:440px">
+        <div class="card-title">Změna hesla</div>
+        <div class="form-group"><label>Aktuální heslo</label><input type="password" id="pw-current" placeholder="••••••••"/></div>
+        <div class="form-group"><label>Nové heslo</label><input type="password" id="pw-new" placeholder="••••••••"/></div>
+        <div class="form-group"><label>Potvrdit nové heslo</label><input type="password" id="pw-confirm" placeholder="••••••••"/></div>
+        <button class="btn btn-primary" onclick="changePassword()">Změnit heslo</button>
+        <div class="success-msg" id="pw-success">✓ Heslo bylo změněno</div>
+        <div class="error-msg" id="pw-error">Chyba</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const API = '';
+  let token = sessionStorage.getItem('exitnav_token') || '';
+  let selectedFile = null;
+  let trainPollId = null;
+
+  // ---- Auth ----
+  async function doLogin() {
+    const pw = document.getElementById('pw-input').value;
+    document.getElementById('login-error').classList.remove('show');
+    try {
+      const r = await fetch(API + '/api/auth/login', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({password: pw})
+      });
+      if (!r.ok) { document.getElementById('login-error').classList.add('show'); return; }
+      const d = await r.json();
+      token = d.token;
+      sessionStorage.setItem('exitnav_token', token);
+      showAdmin();
+    } catch(e) {
+      document.getElementById('login-error').textContent = 'Backend nedostupný: ' + e.message;
+      document.getElementById('login-error').classList.add('show');
+    }
+  }
+
+  async function checkAuth() {
+    if (!token) return;
+    try {
+      const r = await fetch(API + '/api/auth/check', {headers:{'x-session-token': token}});
+      if (r.ok) showAdmin();
+    } catch(e) {}
+  }
+
+  function showAdmin() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-content').classList.add('show');
+    document.getElementById('btn-logout').style.display = '';
+    refreshModelStatus();
+    refreshClasses();
+    refreshGraphLabels();
+  }
+
+  async function logout() {
+    await fetch(API + '/api/auth/logout', {method:'POST', headers:{'x-session-token': token}}).catch(()=>{});
+    token = '';
+    sessionStorage.removeItem('exitnav_token');
+    location.reload();
+  }
+
+  // ---- Tabs ----
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    const tabs = ['train','editor','settings'];
+    const idx = tabs.indexOf(name);
+    document.querySelectorAll('.tab')[idx].classList.add('active');
+    document.getElementById('tab-'+name).classList.add('active');
+    // Pass token to editor iframe
+    if (name === 'editor') {
+      const iframe = document.getElementById('editor-frame');
+      iframe.contentWindow.postMessage({type:'auth_token', token}, '*');
+    }
+  }
+
+  // ---- Drop zone ----
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('drag-over');});
+  dz.addEventListener('dragleave', ()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e=>{e.preventDefault();dz.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('video/'))setFile(f);});
+  function onFileSelect(inp){if(inp.files[0])setFile(inp.files[0]);}
+  function setFile(f){selectedFile=f;document.getElementById('file-name').textContent=f.name+' ('+(f.size/1e6).toFixed(1)+' MB)';document.getElementById('btn-extract').disabled=false;}
+
+  // ---- Extract ----
+  async function extractFrames() {
+    if (!selectedFile) return;
+    const selectVal = document.getElementById('in-label-select').value;
+    const customVal = document.getElementById('in-label-custom').value.trim();
+    const label = customVal || selectVal;
+    if (!label) { alert('Vyberte nebo zadejte label místnosti'); return; }
+    const fps = parseFloat(document.getElementById('in-fps').value)||1;
+    const btn = document.getElementById('btn-extract');
+    btn.disabled = true;
+    const prog = document.getElementById('extract-prog'); prog.classList.add('show');
+    const bar  = document.getElementById('extract-bar');
+    const txt  = document.getElementById('extract-txt');
+    bar.style.width='10%'; txt.textContent='Nahrávám video…';
+    const fd = new FormData();
+    fd.append('video', selectedFile); fd.append('label', label); fd.append('fps', fps);
+    try {
+      bar.style.width='40%'; txt.textContent='Zpracovávám…';
+      const r = await fetch(API+'/api/train/extract',{method:'POST',headers:{'x-session-token':token},body:fd});
+      if(!r.ok)throw new Error(await r.text());
+      const d = await r.json();
+      bar.style.width='100%'; bar.classList.add('done');
+      txt.textContent='✓ Uloženo '+d.frames_saved+' framů pro třídu "'+d.label+'"';
+      refreshClasses(); refreshGraphLabels();
+    } catch(e){txt.textContent='✕ Chyba: '+e.message;}
+    finally{btn.disabled=false;}
+  }
+
+  // ---- Train ----
+  async function startTraining() {
+    const epochs=parseInt(document.getElementById('in-epochs').value)||20;
+    const batch=parseInt(document.getElementById('in-batch').value)||16;
+    const lr=parseFloat(document.getElementById('in-lr').value)||5e-4;
+    const btn=document.getElementById('btn-train'); btn.disabled=true;
+    const prog=document.getElementById('train-prog'); prog.classList.add('show');
+    const trainBar=document.getElementById('train-bar');
+    trainBar.classList.remove('done');
+    trainBar.style.width='5%';
+    document.getElementById('train-txt').textContent='Spouštím…';
+    document.getElementById('train-log').textContent='';
+    try {
+      const r=await fetch(API+'/api/train/start',{method:'POST',headers:{'Content-Type':'application/json','x-session-token':token},body:JSON.stringify({epochs,batch,lr})});
+      if(!r.ok)throw new Error(await readError(r));
+      pollTraining(epochs);
+    } catch(e){document.getElementById('train-log').textContent='Chyba: '+e.message;btn.disabled=false;}
+  }
+
+  function pollTraining(epochs) {
+    clearInterval(trainPollId);
+    trainPollId = setInterval(async()=>{
+      try {
+        const r=await fetch(API+'/api/train/status',{headers:{'x-session-token':token}});
+        const d=await r.json();
+        const log=document.getElementById('train-log');
+        if(d.log&&d.log.length){log.textContent=d.log.join('\n');log.scrollTop=log.scrollHeight;}
+        const pct=Math.max(5,Math.min(100,d.progress||0));
+        document.getElementById('train-bar').style.width=pct+'%';
+        document.getElementById('train-txt').textContent=d.running?'Trénink… '+pct+'%':'Dokončuji…';
+        if(d.error){log.textContent+='\n\nCHYBA:\n'+d.error;clearInterval(trainPollId);document.getElementById('btn-train').disabled=false;}
+        if(!d.running&&!d.error){
+          document.getElementById('train-bar').style.width='100%';document.getElementById('train-bar').classList.add('done');
+          document.getElementById('train-txt').textContent='✓ Dokončen – val acc: '+(d.last_val_acc?(d.last_val_acc*100).toFixed(1)+'%':'—');
+          clearInterval(trainPollId);document.getElementById('btn-train').disabled=false;refreshModelStatus();}
+      }catch(e){}
+    },2000);
+  }
+
+  // ---- Status ----
+  async function refreshModelStatus() {
+    try {
+      const r=await fetch(API+'/api/model/status');const d=await r.json();
+      const badge=document.getElementById('model-badge');const txt=document.getElementById('model-badge-text');
+      if(d.available){badge.className='model-badge ok';txt.textContent='Model natrénován – '+d.classes?.length+' tříd';}
+      else{badge.className='model-badge missing';txt.textContent='Model nenalezen';}
+    }catch(e){}
+  }
+
+  async function refreshClasses() {
+    try {
+      const r=await fetch(API+'/api/training/classes');const d=await r.json();
+      const grid=document.getElementById('classes-grid');
+      if(!d.classes.length){grid.innerHTML='<span style="font-family:var(--mono);font-size:12px;color:var(--muted)">Žádné třídy</span>';return;}
+      grid.innerHTML=d.classes.map(c=>`<div class="class-chip"><span class="chip-count">${d.counts[c]||0}</span><span class="chip-label">${c}</span></div>`).join('')
+        + `<span style="font-family:var(--mono);font-size:11px;color:var(--muted);grid-column:1/-1">Dataset mimo projekt: ${d.storage || ''}</span>`;
+    }catch(e){}
+  }
+
+  async function refreshGraphLabels() {
+    // Populate label dropdown from graph nodes + existing training classes
+    const sel=document.getElementById('in-label-select');
+    const prev=sel.value;
+    try {
+      const [classR, graphR] = await Promise.allSettled([
+        fetch(API+'/api/training/classes'),
+        fetch(API+'/api/graph')
+      ]);
+      const labels=new Set();
+      if(classR.status==='fulfilled'&&classR.value.ok){const d=await classR.value.json();d.classes.forEach(c=>labels.add(c));}
+      if(graphR.status==='fulfilled'&&graphR.value.ok){const d=await graphR.value.json();Object.keys(d.nodes||{}).forEach(n=>labels.add(n));}
+      sel.innerHTML='<option value="">— Vyberte existující —</option>'+[...labels].sort().map(l=>`<option value="${l}">${l}</option>`).join('');
+      if(prev)sel.value=prev;
+    }catch(e){}
+  }
+
+  // ---- Change password ----
+  async function changePassword() {
+    const cur=document.getElementById('pw-current').value;
+    const nw=document.getElementById('pw-new').value;
+    const conf=document.getElementById('pw-confirm').value;
+    document.getElementById('pw-success').classList.remove('show');
+    document.getElementById('pw-error').classList.remove('show');
+    if(nw!==conf){document.getElementById('pw-error').textContent='Hesla se neshodují';document.getElementById('pw-error').classList.add('show');return;}
+    try {
+      const r=await fetch(API+'/api/auth/change-password',{method:'POST',headers:{'Content-Type':'application/json','x-session-token':token},body:JSON.stringify({current:cur,new_password:nw})});
+      if(!r.ok){const d=await r.json();document.getElementById('pw-error').textContent=d.detail;document.getElementById('pw-error').classList.add('show');return;}
+      document.getElementById('pw-success').classList.add('show');
+      document.getElementById('pw-current').value='';document.getElementById('pw-new').value='';document.getElementById('pw-confirm').value='';
+    }catch(e){document.getElementById('pw-error').textContent=e.message;document.getElementById('pw-error').classList.add('show');}
+  }
+
+  async function readError(response) {
+    try {
+      const data = await response.json();
+      return data.detail || JSON.stringify(data);
+    } catch (e) {
+      return await response.text();
+    }
+  }
+
+  // Init
+  checkAuth();
+</script>
+<script src="/static/theme.js"></script>
+<script src="/static/i18n.js"></script>
+</body>
+</html>

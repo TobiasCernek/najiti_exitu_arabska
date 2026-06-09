@@ -89,6 +89,7 @@
 
     .badge-dot{width:8px;height:8px;border-radius:50%;background:currentColor;}
   </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
 </head>
 <body>
 <div id="header">
@@ -97,9 +98,9 @@
     <div class="logo-text">Exit<span>Nav</span></div>
   </div>
   <div class="nav-links">
-    <a href="index.html">Kamera</a>
-    <a href="editor.html">Editor</a>
-    <a href="train.html" class="active">Trénink</a>
+    <a href="/camera">Kamera</a>
+    <a href="/editor">Editor</a>
+    <a href="/train" class="active">Trénink</a>
   </div>
   <div style="width:9px"></div>
 </div>
@@ -188,6 +189,7 @@
 
 <script>
   const API = '';
+  const authToken = sessionStorage.getItem('exitnav_token') || '';
   let selectedFile = null;
   let trainPollId  = null;
 
@@ -230,8 +232,8 @@
 
     try {
       bar.style.width = '40%'; stat.textContent = 'Zpracovávám na serveru…';
-      const r = await fetch(API + '/api/train/extract', { method:'POST', body: fd });
-      if (!r.ok) { const t = await r.text(); throw new Error(t); }
+      const r = await fetch(API + '/api/train/extract', { method:'POST', headers:{'x-session-token':authToken}, body: fd });
+      if (!r.ok) throw new Error(await readError(r));
       const d = await r.json();
       bar.style.width = '100%'; bar.classList.add('done');
       stat.textContent = `✓ Uloženo ${d.frames_saved} framů pro třídu '${d.label}'`;
@@ -252,16 +254,18 @@
     const btn = document.getElementById('btn-train');
     btn.disabled = true;
     document.getElementById('train-progress').style.display = 'block';
-    document.getElementById('train-bar').style.width = '5%';
+    const trainBar = document.getElementById('train-bar');
+    trainBar.classList.remove('done');
+    trainBar.style.width = '5%';
     document.getElementById('train-status-text').textContent = 'Spouštím trénink…';
     document.getElementById('train-log').textContent = '';
 
     try {
       const r = await fetch(API + '/api/train/start', {
-        method:'POST', headers:{'Content-Type':'application/json'},
+        method:'POST', headers:{'Content-Type':'application/json','x-session-token':authToken},
         body: JSON.stringify({epochs, batch, lr})
       });
-      if (!r.ok) { const t = await r.text(); throw new Error(t); }
+      if (!r.ok) throw new Error(await readError(r));
       pollTraining(epochs);
     } catch(e) {
       document.getElementById('train-log').textContent = 'Chyba: ' + e.message;
@@ -274,20 +278,16 @@
     clearInterval(trainPollId);
     trainPollId = setInterval(async () => {
       try {
-        const r = await fetch(API + '/api/train/status');
+        const r = await fetch(API + '/api/train/status', {headers:{'x-session-token':authToken}});
         const d = await r.json();
         const log = document.getElementById('train-log');
         if (d.log && d.log.length) {
           log.textContent = d.log.join('\n');
           log.scrollTop = log.scrollHeight;
-          // Estimate progress from last epoch line
-          const match = d.log[d.log.length-1].match(/Epoch\s+(\d+)\//);
-          if (match) {
-            const pct = Math.round((parseInt(match[1]) / epochs) * 100);
-            document.getElementById('train-bar').style.width = pct + '%';
-            document.getElementById('train-status-text').textContent = `Trénink… ${pct}%`;
-          }
         }
+        const pct = Math.max(5, Math.min(100, d.progress || 0));
+        document.getElementById('train-bar').style.width = pct + '%';
+        document.getElementById('train-status-text').textContent = d.running ? `Trénink… ${pct}%` : 'Dokončuji…';
         if (d.error) {
           log.textContent += '\n\nCHYBA:\n' + d.error;
           clearInterval(trainPollId);
@@ -323,17 +323,16 @@
   }
 
   async function refreshClasses() {
-    // Poll training data dir via model status classes, or show placeholder
     const grid = document.getElementById('classes-grid');
     try {
-      const r = await fetch(API + '/api/model/status');
+      const r = await fetch(API + '/api/training/classes');
       const d = await r.json();
       if (d.classes && d.classes.length) {
         grid.innerHTML = d.classes.map(c => `
           <div class="class-chip">
-            <span class="chip-count">✓</span>
+            <span class="chip-count">${d.counts[c] || 0}</span>
             <span class="chip-label">${c}</span>
-          </div>`).join('');
+          </div>`).join('') + `<span style="font-family:var(--mono);font-size:11px;color:var(--muted);grid-column:1/-1">Dataset mimo projekt: ${d.storage || ''}</span>`;
       } else {
         grid.innerHTML = '<span style="font-family:var(--mono);font-size:12px;color:var(--muted)">Žádné třídy – nejprve nahrajte videa</span>';
       }
@@ -343,8 +342,22 @@
   }
 
   // Init
+  if (!authToken) {
+    document.getElementById('train-log').textContent = 'Pro trénink se nejdřív přihlaste v administraci.';
+  }
   refreshModelStatus();
   refreshClasses();
+
+  async function readError(response) {
+    try {
+      const data = await response.json();
+      return data.detail || JSON.stringify(data);
+    } catch (e) {
+      return await response.text();
+    }
+  }
 </script>
+<script src="/static/theme.js"></script>
+<script src="/static/i18n.js"></script>
 </body>
 </html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>ExitNav – Nouzová navigace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#060c0a;--surface:#0d1a14;--border:#162a1e;
+      --accent:#00e87a;--accent2:#00ff99;--warn:#ffb800;--danger:#ff4d1c;
+      --text:#e8f5ee;--muted:#4a7060;
+      --mono:'Share Tech Mono',monospace;--sans:'Barlow Condensed',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;}
+
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:
+        linear-gradient(rgba(0,232,122,0.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(0,232,122,0.04) 1px,transparent 1px);
+      background-size:48px 48px;
+      animation:gridScroll 20s linear infinite;
+      pointer-events:none;z-index:0;
+    }
+    @keyframes gridScroll{0%{background-position:0 0}100%{background-position:48px 48px}}
+
+    #app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;}
+
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:18px 32px;border-bottom:1px solid var(--border);
+      background:rgba(6,12,10,0.85);backdrop-filter:blur(12px);
+      position:sticky;top:0;z-index:10;
+    }
+    .logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;}
+    .logo-icon{width:34px;height:34px;background:var(--accent);clip-path:polygon(50% 0%,100% 100%,0% 100%);position:relative;flex-shrink:0;}
+    .logo-icon::after{content:'';position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:8px;background:#060c0a;border-radius:1px;}
+    .logo-text{font-size:22px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;}
+    .logo-text span{color:var(--accent);}
+    .header-right{display:flex;align-items:center;gap:12px;}
+    .version{font-family:var(--mono);font-size:10px;color:var(--muted);}
+    .header-badge{
+      display:flex;align-items:center;gap:6px;
+      font-family:var(--mono);font-size:10px;color:var(--accent);
+      padding:5px 12px;border:1px solid rgba(0,232,122,0.25);border-radius:4px;
+      background:rgba(0,232,122,0.05);text-decoration:none;letter-spacing:0.07em;
+      text-transform:uppercase;transition:all 0.2s;
+    }
+    .header-badge:hover{background:rgba(0,232,122,0.12);border-color:var(--accent);}
+
+    /* Hero */
+    .hero{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:70px 24px 50px;text-align:center;gap:28px;
+    }
+    .hero-badge{
+      display:inline-flex;align-items:center;gap:8px;
+      font-family:var(--mono);font-size:10px;color:var(--accent);
+      letter-spacing:0.14em;text-transform:uppercase;
+      padding:6px 16px;border:1px solid rgba(0,232,122,0.3);border-radius:20px;
+      background:rgba(0,232,122,0.06);
+    }
+    .badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1.5s infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+    .hero h1{
+      font-size:clamp(52px,11vw,100px);font-weight:900;line-height:0.9;
+      letter-spacing:-0.02em;text-transform:uppercase;
+    }
+    .hero h1 .green{color:var(--accent);}
+    .hero h1 .dim{color:var(--muted);}
+
+    .hero-sub{
+      font-size:clamp(15px,2.2vw,19px);color:var(--muted);
+      max-width:500px;line-height:1.65;font-weight:300;
+    }
+
+    .cta-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
+    .btn-cta{
+      display:inline-flex;align-items:center;gap:10px;
+      padding:16px 34px;border-radius:10px;font-family:var(--sans);
+      font-size:17px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+      text-decoration:none;transition:all 0.2s;cursor:pointer;border:none;
+    }
+    .btn-cta-primary{background:var(--accent);color:#060c0a;}
+    .btn-cta-primary:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,232,122,0.28);}
+    .btn-cta-secondary{background:transparent;color:var(--text);border:1px solid var(--border);}
+    .btn-cta-secondary:hover{border-color:var(--accent);color:var(--accent);}
+
+    /* Status strip */
+    .status-strip{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+      background:var(--surface);
+    }
+    .stat-item{
+      padding:22px 28px;display:flex;flex-direction:column;gap:4px;
+      border-right:1px solid var(--border);
+    }
+    .stat-item:last-child{border-right:none;}
+    .stat-num{font-family:var(--mono);font-size:30px;color:var(--accent);line-height:1;}
+    .stat-desc{font-size:12px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;}
+
+    /* Status banner */
+    .model-banner{
+      display:none;margin:0;padding:12px 28px;
+      background:#1a0d00;border-bottom:1px solid rgba(255,184,0,0.3);
+      font-family:var(--mono);font-size:11px;color:var(--warn);
+      display:flex;align-items:center;gap:10px;
+    }
+    .model-banner.ok{background:rgba(0,232,122,0.05);border-bottom-color:rgba(0,232,122,0.2);color:var(--accent);}
+    .model-banner a{color:inherit;font-weight:bold;}
+
+    /* Features grid */
+    .features{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:1px;background:var(--border);
+      border-top:1px solid var(--border);
+    }
+    .feat{
+      background:var(--bg);padding:28px 32px;display:flex;flex-direction:column;gap:14px;
+      transition:background 0.2s;
+    }
+    .feat:hover{background:var(--surface);}
+    .feat-icon{
+      width:42px;height:42px;border:1px solid var(--border);border-radius:8px;
+      display:flex;align-items:center;justify-content:center;font-size:19px;
+    }
+    .feat h3{font-size:17px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;}
+    .feat p{font-size:13px;color:var(--muted);line-height:1.65;font-weight:300;}
+    .feat-link{
+      font-family:var(--mono);font-size:10px;color:var(--muted);text-decoration:none;
+      letter-spacing:0.08em;text-transform:uppercase;margin-top:auto;
+      transition:color 0.2s;
+    }
+    .feat-link:hover{color:var(--accent);}
+
+    footer{
+      padding:18px 32px;border-top:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      font-family:var(--mono);font-size:10px;color:var(--muted);
+    }
+    .footer-status{display:flex;align-items:center;gap:8px;}
+    .status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);}
+    .status-dot.ok{background:var(--accent);}
+    .status-dot.err{background:var(--danger);}
+
+    @media(max-width:640px){
+      header{padding:14px 18px;}
+      .hero{padding:50px 18px 36px;}
+      .status-strip{grid-template-columns:1fr 1fr;}
+      .stat-item:nth-child(2){border-right:none;}
+      .stat-item:last-child{grid-column:1/-1;border-top:1px solid var(--border);}
+      footer{flex-direction:column;gap:8px;text-align:center;}
+      .model-banner{padding:10px 18px;}
+    }
+  </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
+</head>
+<body>
+<div id="app">
+  <header>
+    <a href="/" class="logo">
+      <div class="logo-icon"></div>
+      <div class="logo-text">Exit<span>Nav</span></div>
+    </a>
+    <div class="header-right">
+      <span class="version">v1.0</span>
+      <a href="/admin" class="header-badge">⚙ Admin</a>
+    </div>
+  </header>
+
+  <div id="model-banner" class="model-banner">
+    <span>⚠</span>
+    <span>Model není natrénován. <a href="/admin">Přejděte do Admin → Trénink</a> a nahrajte videa.</span>
+  </div>
+
+  <div class="hero">
+    <div class="hero-badge">
+      <div class="badge-dot"></div>
+      Systém nouzové navigace
+    </div>
+    <h1>
+      <span class="green">Exit</span><br>
+      <span class="dim">Nav</span>
+    </h1>
+    <p class="hero-sub">
+      Inteligentní navigace k nejbližšímu nouzovému exitu.
+      Kamera rozpozná místnost a ukáže vám nejrychlejší cestu ven.
+    </p>
+    <div class="cta-row">
+      <a href="/camera" class="btn-cta btn-cta-primary">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
+        Spustit kameru
+      </a>
+      <a href="/admin" class="btn-cta btn-cta-secondary">⚙ Administrace</a>
+    </div>
+  </div>
+
+  <div class="status-strip">
+    <div class="stat-item">
+      <div class="stat-num" id="stat-classes">—</div>
+      <div class="stat-desc">Natrénovaných tříd</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat-nodes">—</div>
+      <div class="stat-desc">Uzlů v grafu</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat-exits">—</div>
+      <div class="stat-desc">Nouzových exitů</div>
+    </div>
+  </div>
+
+  <div class="features">
+    <div class="feat">
+      <div class="feat-icon">📷</div>
+      <h3>Rozpoznávání místností</h3>
+      <p>MobileNetV3 model natrénovaný na fotkách vaší budovy identifikuje polohu v reálném čase přes kameru.</p>
+      <a href="/camera" class="feat-link">Spustit →</a>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🗺</div>
+      <h3>Pathfinding algoritmus</h3>
+      <p>Dijkstrův algoritmus na grafu budovy vypočítá nejkratší cestu ke každému nouzovému exitu okamžitě.</p>
+      <a href="/editor" class="feat-link">Editor grafu →</a>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🎓</div>
+      <h3>Trénink z videí</h3>
+      <p>Nahrajte video z místnosti – systém extrahuje framy a dotrénuje model. Přidávejte nové místnosti kdykoliv.</p>
+      <a href="/admin" class="feat-link">Trénovat →</a>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">✏️</div>
+      <h3>Vizuální editor grafu</h3>
+      <p>Přidávejte místnosti, chodby a exity budovy přes drag &amp; drop rozhraní. Definujte vzdálenosti uzlů.</p>
+      <a href="/editor" class="feat-link">Otevřít editor →</a>
+    </div>
+  </div>
+
+  <footer>
+    <span>ExitNav © 2025 – Nouzová navigace v budovách</span>
+    <div class="footer-status">
+      <div class="status-dot" id="footer-dot"></div>
+      <span id="footer-status">Načítám…</span>
+    </div>
+  </footer>
+</div>
+<script>
+  async function loadStats() {
+    try {
+      const [modelR, graphR] = await Promise.all([
+        fetch('/api/model/status'),
+        fetch('/api/graph').catch(() => null),
+      ]);
+      const model = await modelR.json();
+      document.getElementById('stat-classes').textContent = model.classes?.length ?? 0;
+
+      const dot = document.getElementById('footer-dot');
+      const ftxt = document.getElementById('footer-status');
+      const banner = document.getElementById('model-banner');
+
+      if (model.available) {
+        dot.className = 'status-dot ok';
+        ftxt.textContent = 'Model OK – ' + (model.classes?.length ?? 0) + ' tříd';
+        banner.style.display = 'none';
+      } else {
+        dot.className = 'status-dot err';
+        ftxt.textContent = 'Model nenalezen';
+        banner.style.display = 'flex';
+      }
+
+      if (graphR && graphR.ok) {
+        const graph = await graphR.json();
+        const nodes = Object.keys(graph.nodes || {});
+        const exits = nodes.filter(n => graph.nodes[n]?.type === 'exit');
+        document.getElementById('stat-nodes').textContent = nodes.length;
+        document.getElementById('stat-exits').textContent = exits.length;
+      }
+    } catch(e) {
+      document.getElementById('footer-status').textContent = 'Backend nedostupný';
+    }
+  }
+  loadStats();
+</script>
+<script src="/static/theme.js"></script>
+<script src="/static/i18n.js"></script>
+</body>
+</html>
