@@ -91,16 +91,52 @@
     .progress-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
     .progress-fill{height:100%;background:var(--warn);border-radius:3px;width:0%;transition:width 0.4s;}
     .progress-fill.done{background:var(--accent);}
-    .progress-text{font-family:var(--mono);font-size:11px;color:var(--muted);}
+    .progress-text{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.5;}
 
     /* Train log */
     .train-log{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:11px;color:var(--muted);height:180px;overflow-y:auto;white-space:pre-wrap;line-height:1.6;margin-top:14px;}
 
     /* Classes grid */
     .classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px;}
-    .class-chip{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11px;}
+    .class-chip{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11px;cursor:pointer;position:relative;transition:border-color 0.15s;}
+    .class-chip:hover{border-color:var(--accent2,var(--accent));}
     .chip-count{color:var(--accent);font-size:16px;display:block;line-height:1;}
-    .chip-label{color:var(--muted);font-size:10px;display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .chip-label{color:var(--muted);font-size:10px;display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:18px;}
+    .chip-delete{
+      position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:4px;
+      border:1px solid var(--border);background:var(--surface);color:var(--muted);
+      font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:all 0.15s;
+    }
+    .chip-delete:hover{background:var(--danger,var(--accent));color:#fff;border-color:var(--danger,var(--accent));}
+
+    /* Frame browser modal */
+    #frame-modal-overlay{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);
+      z-index:1000;align-items:center;justify-content:center;padding:20px;
+    }
+    #frame-modal-overlay.open{display:flex;}
+    #frame-modal{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      width:min(900px,100%);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;
+    }
+    #frame-modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+    #frame-modal-header h3{font-family:var(--mono);font-size:13px;letter-spacing:0.08em;text-transform:uppercase;font-weight:400;margin:0;}
+    #frame-modal-close{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;}
+    #frame-modal-close:hover{color:var(--text);border-color:var(--accent2,var(--accent));}
+    #frame-modal-body{flex:1;overflow-y:auto;padding:16px 18px;}
+    #frame-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
+    .frame-cell{position:relative;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--bg);aspect-ratio:4/3;}
+    .frame-cell img{width:100%;height:100%;object-fit:cover;display:block;}
+    .frame-cell .frame-name{position:absolute;bottom:0;left:0;right:0;font-family:var(--mono);font-size:9px;color:var(--text);background:rgba(0,0,0,0.6);padding:2px 4px;text-align:center;}
+    .frame-cell .frame-delete{
+      position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:4px;
+      border:1px solid var(--border);background:rgba(10,12,14,0.85);color:var(--muted);
+      font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:all 0.15s;
+    }
+    .frame-cell .frame-delete:hover{background:var(--danger,var(--accent));color:#fff;border-color:var(--danger,var(--accent));}
+    #frame-modal-empty{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;padding:30px 0;}
 
     /* Model badge */
     .model-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;font-family:var(--mono);font-size:12px;margin-bottom:20px;}
@@ -161,7 +197,7 @@
       <div class="card">
         <div class="card-title">Stav modelu</div>
         <div class="model-badge missing" id="model-badge"><div class="mbadge-dot"></div><span id="model-badge-text">Model nenalezen</span></div>
-        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Natrénované třídy:</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Natrénované třídy: <span style="color:var(--muted)">(klikněte pro zobrazení framů, ✕ smaže třídu)</span></div>
         <div class="classes-grid" id="classes-grid"><span style="font-family:var(--mono);font-size:12px;color:var(--muted)">Načítám…</span></div>
       </div>
 
@@ -229,6 +265,21 @@
     </div>
   </div>
 </div>
+
+<!-- Frame browser modal -->
+<div id="frame-modal-overlay" onclick="if(event.target===this) closeFrameModal()">
+  <div id="frame-modal">
+    <div id="frame-modal-header">
+      <h3 id="frame-modal-title">Framy</h3>
+      <button id="frame-modal-close" onclick="closeFrameModal()">✕</button>
+    </div>
+    <div id="frame-modal-body">
+      <div id="frame-grid"></div>
+      <div id="frame-modal-empty" style="display:none">Žádné framy.</div>
+    </div>
+  </div>
+</div>
+
 <script>
   const API = '';
   let token = sessionStorage.getItem('exitnav_token') || '';
@@ -324,7 +375,19 @@
       if(!r.ok)throw new Error(await r.text());
       const d = await r.json();
       bar.style.width='100%'; bar.classList.add('done');
-      txt.textContent='✓ Uloženo '+d.frames_saved+' framů pro třídu "'+d.label+'"';
+      let msg = '✓ Uloženo '+d.frames_saved+' framů pro třídu "'+d.label+'"';
+      if (typeof d.duration_sec === 'number' && d.duration_sec > 0) {
+        msg += ` (video ~${d.duration_sec.toFixed(1)}s, fps ${d.reported_fps || '?'}`;
+        if (d.skipped_quality || d.skipped_duplicate) {
+          msg += `, zahozeno: ${d.skipped_quality||0} kvalita / ${d.skipped_duplicate||0} duplicit`;
+        }
+        msg += ')';
+      }
+      if (d.warning) {
+        bar.classList.remove('done');
+        msg += '\n⚠ ' + d.warning;
+      }
+      txt.textContent = msg;
       refreshClasses(); refreshGraphLabels();
     } catch(e){txt.textContent='✕ Chyba: '+e.message;}
     finally{btn.disabled=false;}
@@ -384,9 +447,96 @@
       const r=await fetch(API+'/api/training/classes');const d=await r.json();
       const grid=document.getElementById('classes-grid');
       if(!d.classes.length){grid.innerHTML='<span style="font-family:var(--mono);font-size:12px;color:var(--muted)">Žádné třídy</span>';return;}
-      grid.innerHTML=d.classes.map(c=>`<div class="class-chip"><span class="chip-count">${d.counts[c]||0}</span><span class="chip-label">${c}</span></div>`).join('')
+      grid.innerHTML=d.classes.map(c=>`
+        <div class="class-chip" onclick="openFrameModal('${escAttr(c)}')">
+          <span class="chip-count">${d.counts[c]||0}</span>
+          <span class="chip-label">${c}</span>
+          <button class="chip-delete" title="Smazat třídu '${escAttr(c)}'" onclick="event.stopPropagation(); deleteClass('${escAttr(c)}')">✕</button>
+        </div>`).join('')
         + `<span style="font-family:var(--mono);font-size:11px;color:var(--muted);grid-column:1/-1">Dataset mimo projekt: ${d.storage || ''}</span>`;
     }catch(e){}
+  }
+
+  function escAttr(s) {
+    return String(s).replace(/'/g, "\\'");
+  }
+
+  // ---- Delete class ----
+  async function deleteClass(label) {
+    if (!token) { alert('Pro úpravu tříd se nejdřív přihlaste.'); return; }
+    if (!confirm(`Opravdu smazat třídu '${label}' a všechny natrénované framy?`)) return;
+    try {
+      const r = await fetch(API + '/api/training/classes/' + encodeURIComponent(label), {
+        method: 'DELETE', headers: {'x-session-token': token}
+      });
+      if (!r.ok) throw new Error(await readError(r));
+      refreshClasses();
+      refreshGraphLabels();
+    } catch(e) {
+      alert('Chyba při mazání třídy: ' + e.message);
+    }
+  }
+
+  // ---- Frame browser modal ----
+  let currentFrameLabel = null;
+
+  async function openFrameModal(label) {
+    if (!token) { alert('Pro prohlížení framů se nejdřív přihlaste.'); return; }
+    currentFrameLabel = label;
+    document.getElementById('frame-modal-title').textContent = `Framy – ${label}`;
+    document.getElementById('frame-modal-overlay').classList.add('open');
+    await loadFrames(label);
+  }
+
+  function closeFrameModal() {
+    document.getElementById('frame-modal-overlay').classList.remove('open');
+    currentFrameLabel = null;
+  }
+
+  async function loadFrames(label) {
+    const grid = document.getElementById('frame-grid');
+    const empty = document.getElementById('frame-modal-empty');
+    grid.innerHTML = '<span style="font-family:var(--mono);font-size:12px;color:var(--muted)">Načítám…</span>';
+    empty.style.display = 'none';
+    try {
+      const r = await fetch(API + '/api/training/classes/' + encodeURIComponent(label) + '/frames', {
+        headers: {'x-session-token': token}
+      });
+      if (!r.ok) throw new Error(await readError(r));
+      const d = await r.json();
+      if (!d.frames || !d.frames.length) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      grid.innerHTML = d.frames.map(f => {
+        const url = API + '/api/training/classes/' + encodeURIComponent(label) + '/frames/' + encodeURIComponent(f)
+          + '?token=' + encodeURIComponent(token);
+        return `
+          <div class="frame-cell">
+            <img src="${url}" loading="lazy" alt="${f}" />
+            <button class="frame-delete" title="Smazat frame" onclick="deleteFrame('${escAttr(f)}')">✕</button>
+            <div class="frame-name">${f}</div>
+          </div>`;
+      }).join('');
+    } catch(e) {
+      grid.innerHTML = `<span style="font-family:var(--mono);font-size:12px;color:var(--muted)">Chyba: ${e.message}</span>`;
+    }
+  }
+
+  async function deleteFrame(filename) {
+    if (!currentFrameLabel) return;
+    try {
+      const r = await fetch(
+        API + '/api/training/classes/' + encodeURIComponent(currentFrameLabel) + '/frames/' + encodeURIComponent(filename),
+        { method: 'DELETE', headers: {'x-session-token': token} }
+      );
+      if (!r.ok) throw new Error(await readError(r));
+      await loadFrames(currentFrameLabel);
+      refreshClasses();
+    } catch(e) {
+      alert('Chyba při mazání framu: ' + e.message);
+    }
   }
 
   async function refreshGraphLabels() {

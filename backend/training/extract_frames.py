@@ -63,8 +63,15 @@ def extract_frames(
     min_blur: float = 35.0,
     min_brightness: float = 18.0,
     duplicate_distance: int = 3,
-) -> int:
-    """Extract frames from a video into a class folder and return saved count."""
+) -> dict:
+    """Extract frames from a video into a class folder and return saved count.
+
+    Frame selection is timestamp-based (using each decoded frame's
+    presentation time) rather than purely index/step-based. This avoids
+    under-sampling on containers/codecs (commonly .mov / HEVC) where
+    ``CAP_PROP_FPS`` is unreliable or where OpenCV reports a frame count
+    that doesn't match how many frames can actually be decoded.
+    """
     safe_label = _safe_label(label)
     output_root.mkdir(parents=True, exist_ok=True)
     out_dir = output_root / safe_label
@@ -74,9 +81,10 @@ def extract_frames(
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video: {video_path}")
 
-    video_fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+    reported_fps = cap.get(cv2.CAP_PROP_FPS) or 0.0
+    reported_frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0.0
     fps = max(0.1, float(fps))
-    step = max(1, int(round(video_fps / fps)))
+    interval_sec = 1.0 / fps
 
     existing = sorted(out_dir.glob("frame_*.jpg"))
     start_idx = len(existing)
@@ -86,16 +94,38 @@ def extract_frames(
     skipped_duplicate = 0
     frame_idx = 0
     last_fingerprint: int | None = None
+    next_target_sec = 0.0
+    last_timestamp_sec = 0.0
+    fallback_to_index_step = False
+
     while saved < max_frames:
         ret, frame = cap.read()
         if not ret:
             break
-        if frame_idx % step == 0:
+
+        timestamp_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
+        timestamp_sec = timestamp_ms / 1000.0 if timestamp_ms and timestamp_ms > 0 else None
+
+        if timestamp_sec is None:
+            # Some codecs/containers never report a valid POS_MSEC (stays 0).
+            # Fall back to evenly-spaced index sampling using the reported
+            # FPS (or a sane default if that's also missing/zero).
+            fallback_to_index_step = True
+            effective_fps = reported_fps if reported_fps > 1 else 25.0
+            step = max(1, int(round(effective_fps / fps)))
+            take = frame_idx % step == 0
+        else:
+            last_timestamp_sec = timestamp_sec
+            take = timestamp_sec + 1e-6 >= next_target_sec
+
+        if take:
             if filter_quality:
                 reason = _quality_reason(frame, min_blur, min_brightness)
                 if reason:
                     skipped_dark_blurry += 1
                     frame_idx += 1
+                    if not fallback_to_index_step:
+                        next_target_sec += interval_sec
                     continue
                 fingerprint = _frame_fingerprint(frame)
                 if (
@@ -104,6 +134,8 @@ def extract_frames(
                 ):
                     skipped_duplicate += 1
                     frame_idx += 1
+                    if not fallback_to_index_step:
+                        next_target_sec += interval_sec
                     continue
                 last_fingerprint = fingerprint
             filename = out_dir / f"frame_{start_idx + saved:05d}.jpg"
@@ -111,14 +143,54 @@ def extract_frames(
             if not ok:
                 raise RuntimeError(f"Could not write frame: {filename}")
             saved += 1
+            if not fallback_to_index_step:
+                next_target_sec += interval_sec
         frame_idx += 1
 
     cap.release()
+
+    duration_hint = (
+        f", duration~{last_timestamp_sec:.1f}s" if last_timestamp_sec else ""
+    )
     print(
         f"[extract_frames] Label '{safe_label}': saved {saved} frames -> {out_dir} "
-        f"(skipped quality={skipped_dark_blurry}, duplicates={skipped_duplicate})"
+        f"(decoded frames={frame_idx}, reported_fps={reported_fps:.2f}, "
+        f"reported_frame_count={reported_frame_count:.0f}{duration_hint}, "
+        f"index_fallback={fallback_to_index_step}, "
+        f"skipped quality={skipped_dark_blurry}, duplicates={skipped_duplicate})"
     )
-    return saved
+
+    warning = None
+    if frame_idx <= 5 and saved <= 1:
+        warning = (
+            f"Z videa se podařilo přečíst jen {frame_idx} snímek(ů). Soubor pravděpodobně "
+            "používá kontejner/kodek (často .mov/HEVC), který OpenCV neumí plně dekódovat. "
+            "Zkuste video převést do .mp4 (H.264) a nahrát znovu."
+        )
+        print(f"[extract_frames] WARNING: {warning}")
+    elif (
+        last_timestamp_sec >= 1.0
+        and saved < max(1, int(last_timestamp_sec * fps * 0.5))
+    ):
+        warning = (
+            f"Extrakce uložila jen {saved} snímků z videa o délce ~{last_timestamp_sec:.1f}s "
+            f"při {fps:g} fps (čekalo se min. ~{int(last_timestamp_sec * fps)}). "
+            "Část snímků mohla být zahozena jako tmavá/rozmazaná/duplicitní, nebo "
+            "video metadata (délka/fps) neodpovídají skutečnému obsahu."
+        )
+        print(f"[extract_frames] WARNING: {warning}")
+
+    return {
+        "saved": saved,
+        "decoded_frames": frame_idx,
+        "reported_fps": round(reported_fps, 2),
+        "reported_frame_count": int(reported_frame_count),
+        "duration_sec": round(last_timestamp_sec, 2),
+        "index_fallback": fallback_to_index_step,
+        "skipped_quality": skipped_dark_blurry,
+        "skipped_duplicate": skipped_duplicate,
+        "warning": warning,
+    }
 
 
 if __name__ == "__main__":
@@ -130,11 +202,13 @@ if __name__ == "__main__":
     parser.add_argument("--keep-low-quality", action="store_true", help="Disable blur/dark/duplicate filtering")
     args = parser.parse_args()
 
-    n = extract_frames(
+    result = extract_frames(
         args.video,
         args.label,
         args.fps,
         max_frames=args.max,
         filter_quality=not args.keep_low_quality,
     )
-    print(f"Done: {n} frames for '{args.label}'")
+    print(f"Done: {result['saved']} frames for '{args.label}'")
+    if result.get("warning"):
+        print(f"Warning: {result['warning']}")

@@ -1,60 +1,280 @@
 {
   "nodes": {
-    "pokoj": {
-      "label": "pokoj",
+    "vstupni_hala": {
+      "label": "Vstupní hala",
       "type": "room",
-      "floor": 1
+      "floor": 0
     },
-    "chodba": {
-      "label": "chodba",
-      "type": "room",
-      "floor": 1
-    },
-    "schody": {
-      "label": "schody",
-      "type": "stair",
-      "floor": 1
-    },
-    "schody dole": {
-      "label": "schody dole",
-      "type": "stair",
+    "hlavni vchod": {
+      "label": "Hlavní vchod",
+      "type": "exit",
       "floor": 0
     },
     "chodba p0": {
-      "label": "chodba p0",
+      "label": "Chodba v přízemí",
       "type": "room",
       "floor": 0
     },
-    "exit": {
-      "label": "exit",
+    "predni schody p0": {
+      "label": "Schody u haly v přízemí",
+      "type": "stair",
+      "floor": 0
+    },
+    "predni schody p1": {
+      "label": "Schody u vstupu v prvním patře",
+      "type": "stair",
+      "floor": 1
+    },
+    "chodba p1": {
+      "label": "Chodba v prvním patře",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna 001": {
+      "label": "Učebna HU 001",
+      "type": "room",
+      "floor": 0
+    },
+    "ucebna 002": {
+      "label": "Učebna VU 002",
+      "type": "room",
+      "floor": 0
+    },
+    "ucebna 003": {
+      "label": "Učebna N1 003",
+      "type": "room",
+      "floor": 0
+    },
+    "ucebna 004": {
+      "label": "Učebna A1 004",
+      "type": "room",
+      "floor": 0
+    },
+    "ucebna 101": {
+      "label": "Učebna 1D 101",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna 102": {
+      "label": "Učebna 1C 102",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna 103": {
+      "label": "Učebna 1B 103",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna 104": {
+      "label": "Učebna 1A 104",
+      "type": "room",
+      "floor": 1
+    },
+    "3D tiskarny": {
+      "label": "Místnost s 3D tiskárnami",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna raj": {
+      "label": "Učebna RAJ",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna P1": {
+      "label": "Počítačová učebna P1",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna P2": {
+      "label": "Počítačová učebna P2",
+      "type": "room",
+      "floor": 1
+    },
+    "zadni schodiste p0": {
+      "label": "Zadní schodiště v přízemí",
+      "type": "stair",
+      "floor": 0
+    },
+    "zadni schodiste p1": {
+      "label": "Zadní schodiště v prvním patře",
+      "type": "stair",
+      "floor": 1
+    },
+    "satny p-1": {
+      "label": "Šatny podzemí",
+      "type": "room",
+      "floor": -1
+    },
+    "satny p0": {
+      "label": "Šatny přízemí",
+      "type": "room",
+      "floor": 0
+    },
+    "predni schodiste p-1": {
+      "label": "Přední schodiště v podzemí",
+      "type": "stair",
+      "floor": -1
+    },
+    "exit satny": {
+      "label": "Exit u šaten",
+      "type": "exit",
+      "floor": 0
+    },
+    "exit zadni p0": {
+      "label": "Exit vzadu v přízemí",
       "type": "exit",
       "floor": 0
     }
   },
   "edges": [
     {
-      "from": "pokoj",
-      "to": "chodba",
+      "from": "hlavni vchod",
+      "to": "vstupni_hala",
       "weight": 1
     },
     {
-      "from": "chodba",
-      "to": "schody",
-      "weight": 2
-    },
-    {
-      "from": "schody",
-      "to": "schody dole",
+      "from": "vstupni_hala",
+      "to": "chodba p0",
       "weight": 1
     },
     {
-      "from": "chodba p0",
-      "to": "schody dole",
+      "from": "vstupni_hala",
+      "to": "predni schody p0",
       "weight": 1
     },
     {
       "from": "chodba p0",
-      "to": "exit",
+      "to": "predni schody p0",
+      "weight": 1
+    },
+    {
+      "from": "predni schody p0",
+      "to": "predni schody p1",
+      "weight": 1
+    },
+    {
+      "from": "ucebna 001",
+      "to": "chodba p0",
+      "weight": 1
+    },
+    {
+      "from": "ucebna 002",
+      "to": "chodba p0",
+      "weight": 1
+    },
+    {
+      "from": "ucebna 003",
+      "to": "chodba p0",
+      "weight": 1
+    },
+    {
+      "from": "ucebna 004",
+      "to": "chodba p0",
+      "weight": 1
+    },
+    {
+      "from": "predni schody p1",
+      "to": "chodba p1",
+      "weight": 1
+    },
+    {
+      "from": "chodba p1",
+      "to": "ucebna 101",
+      "weight": 1
+    },
+    {
+      "from": "chodba p1",
+      "to": "ucebna 102",
+      "weight": 1
+    },
+    {
+      "from": "chodba p1",
+      "to": "ucebna 103",
+      "weight": 1
+    },
+    {
+      "from": "chodba p1",
+      "to": "ucebna 104",
+      "weight": 1
+    },
+    {
+      "from": "chodba p1",
+      "to": "ucebna raj",
+      "weight": 1
+    },
+    {
+      "from": "chodba p1",
+      "to": "3D tiskarny",
+      "weight": 1
+    },
+    {
+      "from": "chodba p1",
+      "to": "ucebna P2",
+      "weight": 1
+    },
+    {
+      "from": "ucebna P2",
+      "to": "ucebna P1",
+      "weight": 1
+    },
+    {
+      "from": "ucebna P1",
+      "to": "3D tiskarny",
+      "weight": 1
+    },
+    {
+      "from": "chodba p0",
+      "to": "zadni schodiste p0",
+      "weight": 1
+    },
+    {
+      "from": "zadni schodiste p0",
+      "to": "zadni schodiste p1",
+      "weight": 1
+    },
+    {
+      "from": "zadni schodiste p1",
+      "to": "chodba p1",
+      "weight": 1
+    },
+    {
+      "from": "predni schody p0",
+      "to": "predni schodiste p-1",
+      "weight": 1
+    },
+    {
+      "from": "predni schodiste p-1",
+      "to": "satny p-1",
+      "weight": 1
+    },
+    {
+      "from": "satny p-1",
+      "to": "satny p0",
+      "weight": 1
+    },
+    {
+      "from": "vstupni_hala",
+      "to": "satny p0",
+      "weight": 1
+    },
+    {
+      "from": "chodba p0",
+      "to": "satny p0",
+      "weight": 1
+    },
+    {
+      "from": "satny p0",
+      "to": "exit satny",
+      "weight": 1
+    },
+    {
+      "from": "vstupni_hala",
+      "to": "exit satny",
+      "weight": 1
+    },
+    {
+      "from": "zadni schodiste p0",
+      "to": "exit zadni p0",
       "weight": 1
     }
   ]

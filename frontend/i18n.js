@@ -67,6 +67,11 @@
     "Výsledek nalezen": "Result found",
     "Místnost rozpoznána, počítám navigaci.": "Room recognized, calculating navigation.",
     "Pro trénink se nejdřív přihlaste v administraci.": "Sign in to administration before training.",
+    "Klikněte na třídu pro zobrazení framů, ✕ smaže celou třídu.": "Click a class to view its frames, ✕ deletes the whole class.",
+    "Framy": "Frames",
+    "Žádné framy.": "No frames.",
+    "Pro úpravu tříd se nejdřív přihlaste v administraci.": "Sign in to administration before editing classes.",
+    "Pro prohlížení framů se nejdřív přihlaste v administraci.": "Sign in to administration before viewing frames.",
   };
 
   const CS = Object.fromEntries(Object.entries(EN).map(([cs, en]) => [en, cs]));

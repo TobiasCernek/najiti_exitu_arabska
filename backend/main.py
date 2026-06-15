@@ -5,7 +5,9 @@ main.py – ExitNav FastAPI backend
 import hashlib
 import json
 import os
+import re
 import secrets
+import shutil
 import tempfile
 import threading
 import traceback
@@ -54,6 +56,13 @@ def _hash(pw: str) -> str:
 
 def _require_admin(x_session_token: Optional[str] = Header(default=None)):
     if not x_session_token or x_session_token not in _sessions:
+        raise HTTPException(401, "Neautorizováno")
+
+def _require_admin_token_or_query(x_session_token: Optional[str] = Header(default=None), token: Optional[str] = None):
+    """Like _require_admin, but also accepts ?token=... for <img> requests
+    which cannot send custom headers."""
+    candidate = x_session_token or token
+    if not candidate or candidate not in _sessions:
         raise HTTPException(401, "Neautorizováno")
 
 # --------------------------------------------------------------------------- #
@@ -205,6 +214,65 @@ def list_training_classes():
     counts  = {c: len(list((TRAINING_DIR / c).glob("*.jpg"))) for c in classes}
     return {"classes": classes, "counts": counts, "storage": str(TRAINING_DIR)}
 
+
+def _safe_class_dir(label: str) -> Path:
+    """Resolve a class folder path safely (no traversal outside TRAINING_DIR)."""
+    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", label.strip()).strip("._-")
+    if not cleaned:
+        raise HTTPException(400, "Neplatný název třídy.")
+    class_dir = (TRAINING_DIR / cleaned).resolve()
+    if class_dir.parent != TRAINING_DIR.resolve():
+        raise HTTPException(400, "Neplatný název třídy.")
+    return class_dir
+
+
+@app.delete("/api/training/classes/{label}")
+def delete_training_class(label: str, _=Depends(_require_admin)):
+    """Delete an entire training class (all extracted frames for that label)."""
+    class_dir = _safe_class_dir(label)
+    if not class_dir.exists() or not class_dir.is_dir():
+        raise HTTPException(404, "Třída nenalezena.")
+    shutil.rmtree(class_dir)
+    return {"ok": True, "label": label, "deleted": True}
+
+
+@app.get("/api/training/classes/{label}/frames")
+def list_training_frames(label: str, _=Depends(_require_admin)):
+    """List extracted frame filenames for a given class."""
+    class_dir = _safe_class_dir(label)
+    if not class_dir.exists() or not class_dir.is_dir():
+        raise HTTPException(404, "Třída nenalezena.")
+    frames = sorted(p.name for p in class_dir.glob("*.jpg"))
+    return {"label": label, "frames": frames, "count": len(frames)}
+
+
+@app.get("/api/training/classes/{label}/frames/{filename}")
+def get_training_frame(label: str, filename: str, _=Depends(_require_admin_token_or_query)):
+    """Serve a single extracted frame image."""
+    class_dir = _safe_class_dir(label)
+    safe_name = Path(filename).name
+    if not re.fullmatch(r"frame_\d{5}\.jpg", safe_name):
+        raise HTTPException(400, "Neplatný název souboru.")
+    frame_path = class_dir / safe_name
+    if not frame_path.exists():
+        raise HTTPException(404, "Frame nenalezen.")
+    return FileResponse(str(frame_path), media_type="image/jpeg")
+
+
+@app.delete("/api/training/classes/{label}/frames/{filename}")
+def delete_training_frame(label: str, filename: str, _=Depends(_require_admin)):
+    """Delete a single extracted frame."""
+    class_dir = _safe_class_dir(label)
+    safe_name = Path(filename).name
+    if not re.fullmatch(r"frame_\d{5}\.jpg", safe_name):
+        raise HTTPException(400, "Neplatný název souboru.")
+    frame_path = class_dir / safe_name
+    if not frame_path.exists():
+        raise HTTPException(404, "Frame nenalezen.")
+    frame_path.unlink()
+    remaining = len(list(class_dir.glob("*.jpg")))
+    return {"ok": True, "deleted": filename, "remaining": remaining}
+
 # ============================================================================ #
 # Inference
 # ============================================================================ #
@@ -271,8 +339,19 @@ async def extract_frames(
         content = await video.read()
         tmp_path.write_bytes(content)
         from training.extract_frames import extract_frames as do_extract
-        n = do_extract(str(tmp_path), label, fps)
-        return {"ok": True, "label": label, "frames_saved": n, "storage": str(TRAINING_DIR)}
+        result = do_extract(str(tmp_path), label, fps)
+        return {
+            "ok": True,
+            "label": label,
+            "frames_saved": result["saved"],
+            "storage": str(TRAINING_DIR),
+            "decoded_frames": result["decoded_frames"],
+            "duration_sec": result["duration_sec"],
+            "reported_fps": result["reported_fps"],
+            "skipped_quality": result["skipped_quality"],
+            "skipped_duplicate": result["skipped_duplicate"],
+            "warning": result["warning"],
+        }
     except Exception as e:
         raise HTTPException(500, str(e))
     finally:
