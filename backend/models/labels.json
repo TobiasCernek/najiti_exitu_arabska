@@ -1,1 +1,34 @@
-{"classes": ["3D_tiskarny", "chodba_p0", "chodba_p1", "predni_schody_p0", "satny_p0", "ucebna_003", "ucebna_004", "ucebna_101", "ucebna_102", "ucebna_103", "ucebna_P1", "ucebna_raj", "vstupni_hala", "zadni_schodiste_p0"]}
+{
+  "classes": [
+    "3D_tiskarny",
+    "chodba_p0",
+    "chodba_p1",
+    "predni_schody_p0",
+    "satny_p0",
+    "ucebn_003",
+    "ucebna_004",
+    "ucebna_101",
+    "ucebna_102",
+    "ucebna_103",
+    "ucebna_P1",
+    "ucebna_rai",
+    "vstupni_hala",
+    "zadni_schodist_p0"
+  ],
+  "label_map": {
+    "3D_tiskarny": 0,
+    "chodba_p0": 1,
+    "chodba_p1": 2,
+    "predni_schody_p0": 3,
+    "satny_p0": 4,
+    "ucebn_003": 5,
+    "ucebna_004": 6,
+    "ucebna_101": 7,
+    "ucebna_102": 8,
+    "ucebna_103": 9,
+    "ucebna_P1": 10,
+    "ucebna_rai": 11,
+    "vstupni_hala": 12,
+    "zadni_schodist_p0": 13
+  }
+}

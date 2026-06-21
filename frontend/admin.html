@@ -136,6 +136,16 @@
       cursor:pointer;transition:all 0.15s;
     }
     .frame-cell .frame-delete:hover{background:var(--danger,var(--accent));color:#fff;border-color:var(--danger,var(--accent));}
+    .frame-cell .frame-move{
+      position:absolute;left:4px;right:4px;bottom:18px;display:flex;gap:4px;
+      background:rgba(6,12,10,0.88);border:1px solid var(--border);border-radius:5px;padding:4px;
+    }
+    .frame-cell .frame-move select{font-size:9px;padding:3px 4px;border-radius:4px;}
+    .frame-cell .frame-move button{
+      flex-shrink:0;border:1px solid var(--border);background:var(--surface);color:var(--text);
+      border-radius:4px;font-family:var(--mono);font-size:9px;padding:0 5px;cursor:pointer;
+    }
+    .frame-cell .frame-move button:hover{border-color:var(--accent);color:var(--accent);}
     #frame-modal-empty{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;padding:30px 0;}
 
     /* Model badge */
@@ -216,10 +226,6 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Nebo zadejte nové ID</label>
-          <input id="in-label-custom" placeholder="ucebna_101"/>
-        </div>
-        <div class="form-group">
           <label>FPS extrakce</label>
           <input id="in-fps" type="number" value="1" min="0.1" max="10" step="0.1"/>
         </div>
@@ -285,6 +291,7 @@
   let token = sessionStorage.getItem('exitnav_token') || '';
   let selectedFile = null;
   let trainPollId = null;
+  let graphLabels = [];
 
   // ---- Auth ----
   async function doLogin() {
@@ -356,10 +363,8 @@
   // ---- Extract ----
   async function extractFrames() {
     if (!selectedFile) return;
-    const selectVal = document.getElementById('in-label-select').value;
-    const customVal = document.getElementById('in-label-custom').value.trim();
-    const label = customVal || selectVal;
-    if (!label) { alert('Vyberte nebo zadejte label místnosti'); return; }
+    const label = document.getElementById('in-label-select').value;
+    if (!label) { alert('Vyberte label místnosti z grafu'); return; }
     const fps = parseFloat(document.getElementById('in-fps').value)||1;
     const btn = document.getElementById('btn-extract');
     btn.disabled = true;
@@ -512,10 +517,18 @@
       grid.innerHTML = d.frames.map(f => {
         const url = API + '/api/training/classes/' + encodeURIComponent(label) + '/frames/' + encodeURIComponent(f)
           + '?token=' + encodeURIComponent(token);
+        const moveOptions = graphLabels
+          .filter(l => l !== label)
+          .map(l => `<option value="${htmlAttr(l)}">${htmlText(l)}</option>`)
+          .join('');
+        const moveControl = moveOptions
+          ? `<div class="frame-move"><select id="move-${cssId(f)}">${moveOptions}</select><button onclick="moveFrame('${escAttr(f)}')">Přesunout</button></div>`
+          : '';
         return `
           <div class="frame-cell">
             <img src="${url}" loading="lazy" alt="${f}" />
             <button class="frame-delete" title="Smazat frame" onclick="deleteFrame('${escAttr(f)}')">✕</button>
+            ${moveControl}
             <div class="frame-name">${f}</div>
           </div>`;
       }).join('');
@@ -539,22 +552,48 @@
     }
   }
 
+  async function moveFrame(filename) {
+    if (!currentFrameLabel) return;
+    const target = document.getElementById('move-' + cssId(filename))?.value;
+    if (!target || target === currentFrameLabel) return;
+    try {
+      const r = await fetch(
+        API + '/api/training/classes/' + encodeURIComponent(currentFrameLabel) + '/frames/' + encodeURIComponent(filename) + '/move',
+        {
+          method: 'POST',
+          headers: {'Content-Type':'application/json','x-session-token': token},
+          body: JSON.stringify({target_label: target})
+        }
+      );
+      if (!r.ok) throw new Error(await readError(r));
+      await loadFrames(currentFrameLabel);
+      refreshClasses();
+    } catch(e) {
+      alert('Chyba při přesunu framu: ' + e.message);
+    }
+  }
+
   async function refreshGraphLabels() {
-    // Populate label dropdown from graph nodes + existing training classes
     const sel=document.getElementById('in-label-select');
     const prev=sel.value;
     try {
-      const [classR, graphR] = await Promise.allSettled([
-        fetch(API+'/api/training/classes'),
-        fetch(API+'/api/graph')
-      ]);
-      const labels=new Set();
-      if(classR.status==='fulfilled'&&classR.value.ok){const d=await classR.value.json();d.classes.forEach(c=>labels.add(c));}
-      if(graphR.status==='fulfilled'&&graphR.value.ok){const d=await graphR.value.json();Object.keys(d.nodes||{}).forEach(n=>labels.add(n));}
-      sel.innerHTML='<option value="">— Vyberte existující —</option>'+[...labels].sort().map(l=>`<option value="${l}">${l}</option>`).join('');
-      if(prev)sel.value=prev;
-    }catch(e){}
+      const graphR = await fetch(API+'/api/graph');
+      if(!graphR.ok)throw new Error('Graf nenalezen');
+      const d=await graphR.json();
+      graphLabels=Object.keys(d.nodes||{}).sort();
+      sel.innerHTML='<option value="">— Vyberte uzel z grafu —</option>'+graphLabels.map(l=>`<option value="${htmlAttr(l)}">${htmlText(l)}</option>`).join('');
+      if(prev&&graphLabels.includes(prev))sel.value=prev;
+    }catch(e){
+      graphLabels=[];
+      sel.innerHTML='<option value="">Graf se nepodařilo načíst</option>';
+    }
   }
+
+  function htmlText(s) {
+    return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function htmlAttr(s) { return htmlText(s); }
+  function cssId(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, '_'); }
 
   // ---- Change password ----
   async function changePassword() {

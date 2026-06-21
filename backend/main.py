@@ -216,14 +216,32 @@ def list_training_classes():
 
 
 def _safe_class_dir(label: str) -> Path:
-    """Resolve a class folder path safely (no traversal outside TRAINING_DIR)."""
-    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", label.strip()).strip("._-")
-    if not cleaned:
+    """Resolve a class folder path safely while preserving the graph node id."""
+    cleaned = label.strip()
+    if not cleaned or cleaned in {".", ".."}:
+        raise HTTPException(400, "Neplatný název třídy.")
+    if any(ch in cleaned for ch in ['/', '\\', ':', '*', '?', '"', '<', '>', '|']) or any(ord(ch) < 32 for ch in cleaned):
         raise HTTPException(400, "Neplatný název třídy.")
     class_dir = (TRAINING_DIR / cleaned).resolve()
     if class_dir.parent != TRAINING_DIR.resolve():
         raise HTTPException(400, "Neplatný název třídy.")
     return class_dir
+
+
+def _safe_frame_name(filename: str) -> str:
+    safe_name = Path(filename).name
+    if not re.fullmatch(r"frame_\d{5}\.jpg", safe_name):
+        raise HTTPException(400, "Neplatný název souboru.")
+    return safe_name
+
+
+def _next_frame_path(class_dir: Path) -> Path:
+    max_idx = -1
+    for frame in class_dir.glob("frame_*.jpg"):
+        match = re.fullmatch(r"frame_(\d{5})\.jpg", frame.name)
+        if match:
+            max_idx = max(max_idx, int(match.group(1)))
+    return class_dir / f"frame_{max_idx + 1:05d}.jpg"
 
 
 @app.delete("/api/training/classes/{label}")
@@ -250,9 +268,7 @@ def list_training_frames(label: str, _=Depends(_require_admin)):
 def get_training_frame(label: str, filename: str, _=Depends(_require_admin_token_or_query)):
     """Serve a single extracted frame image."""
     class_dir = _safe_class_dir(label)
-    safe_name = Path(filename).name
-    if not re.fullmatch(r"frame_\d{5}\.jpg", safe_name):
-        raise HTTPException(400, "Neplatný název souboru.")
+    safe_name = _safe_frame_name(filename)
     frame_path = class_dir / safe_name
     if not frame_path.exists():
         raise HTTPException(404, "Frame nenalezen.")
@@ -263,15 +279,34 @@ def get_training_frame(label: str, filename: str, _=Depends(_require_admin_token
 def delete_training_frame(label: str, filename: str, _=Depends(_require_admin)):
     """Delete a single extracted frame."""
     class_dir = _safe_class_dir(label)
-    safe_name = Path(filename).name
-    if not re.fullmatch(r"frame_\d{5}\.jpg", safe_name):
-        raise HTTPException(400, "Neplatný název souboru.")
+    safe_name = _safe_frame_name(filename)
     frame_path = class_dir / safe_name
     if not frame_path.exists():
         raise HTTPException(404, "Frame nenalezen.")
     frame_path.unlink()
     remaining = len(list(class_dir.glob("*.jpg")))
     return {"ok": True, "deleted": filename, "remaining": remaining}
+
+
+class MoveFrameRequest(BaseModel):
+    target_label: str
+
+
+@app.post("/api/training/classes/{label}/frames/{filename}/move")
+def move_training_frame(label: str, filename: str, req: MoveFrameRequest, _=Depends(_require_admin)):
+    """Move a single extracted frame to another class folder."""
+    source_dir = _safe_class_dir(label)
+    target_dir = _safe_class_dir(req.target_label)
+    safe_name = _safe_frame_name(filename)
+    source_path = source_dir / safe_name
+    if not source_path.exists():
+        raise HTTPException(404, "Frame nenalezen.")
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target_path = _next_frame_path(target_dir)
+    shutil.move(str(source_path), str(target_path))
+    if source_dir.exists() and not any(source_dir.glob("*.jpg")):
+        source_dir.rmdir()
+    return {"ok": True, "from": label, "to": req.target_label, "filename": target_path.name}
 
 # ============================================================================ #
 # Inference

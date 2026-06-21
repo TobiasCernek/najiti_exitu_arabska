@@ -5,276 +5,276 @@
       "type": "room",
       "floor": 0
     },
-    "hlavni vchod": {
-      "label": "Hlavní vchod",
+    "hlavni_vchod": {
+      "label": "hlavni_vchod",
       "type": "exit",
       "floor": 0
     },
-    "chodba p0": {
-      "label": "Chodba v přízemí",
-      "type": "room",
-      "floor": 0
-    },
-    "predni schody p0": {
-      "label": "Schody u haly v přízemí",
-      "type": "stair",
-      "floor": 0
-    },
-    "predni schody p1": {
-      "label": "Schody u vstupu v prvním patře",
-      "type": "stair",
-      "floor": 1
-    },
-    "chodba p1": {
-      "label": "Chodba v prvním patře",
-      "type": "room",
-      "floor": 1
-    },
-    "ucebna 001": {
+    "ucebna_001": {
       "label": "Učebna HU 001",
       "type": "room",
       "floor": 0
     },
-    "ucebna 002": {
+    "ucebna_002": {
       "label": "Učebna VU 002",
       "type": "room",
       "floor": 0
     },
-    "ucebna 003": {
+    "ucebn_003": {
       "label": "Učebna N1 003",
       "type": "room",
       "floor": 0
     },
-    "ucebna 004": {
+    "ucebna_004": {
       "label": "Učebna A1 004",
       "type": "room",
       "floor": 0
     },
-    "ucebna 101": {
-      "label": "Učebna 1D 101",
+    "chodba_p0": {
+      "label": "Chodba v přízemí",
       "type": "room",
-      "floor": 1
+      "floor": 0
     },
-    "ucebna 102": {
-      "label": "Učebna 1C 102",
-      "type": "room",
-      "floor": 1
+    "exit_zadni_p0": {
+      "label": "Exit vzadu v přízemí",
+      "type": "exit",
+      "floor": 0
     },
-    "ucebna 103": {
-      "label": "Učebna 1B 103",
-      "type": "room",
-      "floor": 1
-    },
-    "ucebna 104": {
-      "label": "Učebna 1A 104",
-      "type": "room",
-      "floor": 1
-    },
-    "3D tiskarny": {
-      "label": "Místnost s 3D tiskárnami",
-      "type": "room",
-      "floor": 1
-    },
-    "ucebna raj": {
-      "label": "Učebna RAJ",
-      "type": "room",
-      "floor": 1
-    },
-    "ucebna P1": {
-      "label": "Počítačová učebna P1",
-      "type": "room",
-      "floor": 1
-    },
-    "ucebna P2": {
-      "label": "Počítačová učebna P2",
-      "type": "room",
-      "floor": 1
-    },
-    "zadni schodiste p0": {
+    "zadni_schodist_p0": {
       "label": "Zadní schodiště v přízemí",
       "type": "stair",
       "floor": 0
     },
-    "zadni schodiste p1": {
+    "predni_schody_p0": {
+      "label": "Schody u haly v přízemí",
+      "type": "stair",
+      "floor": 0
+    },
+    "zadni_schodiste_p1": {
       "label": "Zadní schodiště v prvním patře",
       "type": "stair",
       "floor": 1
     },
-    "satny p-1": {
-      "label": "Šatny podzemí",
-      "type": "room",
-      "floor": -1
-    },
-    "satny p0": {
-      "label": "Šatny přízemí",
-      "type": "room",
-      "floor": 0
-    },
-    "predni schodiste p-1": {
+    "predni_schodiste_p-1": {
       "label": "Přední schodiště v podzemí",
       "type": "stair",
       "floor": -1
     },
-    "exit satny": {
+    "satny_p-1": {
+      "label": "Šatny podzemí",
+      "type": "room",
+      "floor": -1
+    },
+    "satny_p0": {
+      "label": "Šatny přízemí",
+      "type": "room",
+      "floor": 0
+    },
+    "exit_satny": {
       "label": "Exit u šaten",
       "type": "exit",
       "floor": 0
     },
-    "exit zadni p0": {
-      "label": "Exit vzadu v přízemí",
-      "type": "exit",
-      "floor": 0
+    "ucebna_101": {
+      "label": "Učebna 1D 101",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna_102": {
+      "label": "Učebna 1C 102",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna_103": {
+      "label": "Učebna 1B 103",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna_104": {
+      "label": "Učebna 1A 104",
+      "type": "room",
+      "floor": 1
+    },
+    "predni_schody_p1": {
+      "label": "Schody u vstupu v prvním patře",
+      "type": "stair",
+      "floor": 1
+    },
+    "ucebna_rai": {
+      "label": "Učebna RAI",
+      "type": "room",
+      "floor": 1
+    },
+    "chodba_p1": {
+      "label": "Chodba v prvním patře",
+      "type": "room",
+      "floor": 1
+    },
+    "3D_tiskarny": {
+      "label": "Místnost s 3D tiskárnami",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna_P1": {
+      "label": "Počítačová učebna P1",
+      "type": "room",
+      "floor": 1
+    },
+    "ucebna_P2": {
+      "label": "Počítačová učebna P2",
+      "type": "room",
+      "floor": 1
     }
   },
   "edges": [
     {
-      "from": "hlavni vchod",
+      "from": "vstupni_hala",
+      "to": "chodba_p0",
+      "weight": 1
+    },
+    {
+      "from": "vstupni_hala",
+      "to": "predni_schody_p0",
+      "weight": 1
+    },
+    {
+      "from": "chodba_p0",
+      "to": "predni_schody_p0",
+      "weight": 1
+    },
+    {
+      "from": "predni_schody_p0",
+      "to": "predni_schody_p1",
+      "weight": 1
+    },
+    {
+      "from": "ucebna_001",
+      "to": "chodba_p0",
+      "weight": 1
+    },
+    {
+      "from": "ucebna_002",
+      "to": "chodba_p0",
+      "weight": 1
+    },
+    {
+      "from": "ucebn_003",
+      "to": "chodba_p0",
+      "weight": 1
+    },
+    {
+      "from": "ucebna_004",
+      "to": "chodba_p0",
+      "weight": 1
+    },
+    {
+      "from": "predni_schody_p1",
+      "to": "chodba_p1",
+      "weight": 1
+    },
+    {
+      "from": "chodba_p1",
+      "to": "ucebna_101",
+      "weight": 1
+    },
+    {
+      "from": "chodba_p1",
+      "to": "ucebna_102",
+      "weight": 1
+    },
+    {
+      "from": "chodba_p1",
+      "to": "ucebna_103",
+      "weight": 1
+    },
+    {
+      "from": "chodba_p1",
+      "to": "ucebna_104",
+      "weight": 1
+    },
+    {
+      "from": "chodba_p1",
+      "to": "ucebna_rai",
+      "weight": 1
+    },
+    {
+      "from": "chodba_p1",
+      "to": "3D_tiskarny",
+      "weight": 1
+    },
+    {
+      "from": "chodba_p1",
+      "to": "ucebna_P2",
+      "weight": 1
+    },
+    {
+      "from": "ucebna_P2",
+      "to": "ucebna_P1",
+      "weight": 1
+    },
+    {
+      "from": "ucebna_P1",
+      "to": "3D_tiskarny",
+      "weight": 1
+    },
+    {
+      "from": "chodba_p0",
+      "to": "zadni_schodist_p0",
+      "weight": 1
+    },
+    {
+      "from": "zadni_schodist_p0",
+      "to": "zadni_schodiste_p1",
+      "weight": 1
+    },
+    {
+      "from": "zadni_schodiste_p1",
+      "to": "chodba_p1",
+      "weight": 1
+    },
+    {
+      "from": "predni_schody_p0",
+      "to": "predni_schodiste_p-1",
+      "weight": 1
+    },
+    {
+      "from": "predni_schodiste_p-1",
+      "to": "satny_p-1",
+      "weight": 1
+    },
+    {
+      "from": "satny_p-1",
+      "to": "satny_p0",
+      "weight": 1
+    },
+    {
+      "from": "vstupni_hala",
+      "to": "satny_p0",
+      "weight": 1
+    },
+    {
+      "from": "chodba_p0",
+      "to": "satny_p0",
+      "weight": 1
+    },
+    {
+      "from": "satny_p0",
+      "to": "exit_satny",
+      "weight": 1
+    },
+    {
+      "from": "vstupni_hala",
+      "to": "exit_satny",
+      "weight": 1
+    },
+    {
+      "from": "zadni_schodist_p0",
+      "to": "exit_zadni_p0",
+      "weight": 1
+    },
+    {
+      "from": "hlavni_vchod",
       "to": "vstupni_hala",
-      "weight": 1
-    },
-    {
-      "from": "vstupni_hala",
-      "to": "chodba p0",
-      "weight": 1
-    },
-    {
-      "from": "vstupni_hala",
-      "to": "predni schody p0",
-      "weight": 1
-    },
-    {
-      "from": "chodba p0",
-      "to": "predni schody p0",
-      "weight": 1
-    },
-    {
-      "from": "predni schody p0",
-      "to": "predni schody p1",
-      "weight": 1
-    },
-    {
-      "from": "ucebna 001",
-      "to": "chodba p0",
-      "weight": 1
-    },
-    {
-      "from": "ucebna 002",
-      "to": "chodba p0",
-      "weight": 1
-    },
-    {
-      "from": "ucebna 003",
-      "to": "chodba p0",
-      "weight": 1
-    },
-    {
-      "from": "ucebna 004",
-      "to": "chodba p0",
-      "weight": 1
-    },
-    {
-      "from": "predni schody p1",
-      "to": "chodba p1",
-      "weight": 1
-    },
-    {
-      "from": "chodba p1",
-      "to": "ucebna 101",
-      "weight": 1
-    },
-    {
-      "from": "chodba p1",
-      "to": "ucebna 102",
-      "weight": 1
-    },
-    {
-      "from": "chodba p1",
-      "to": "ucebna 103",
-      "weight": 1
-    },
-    {
-      "from": "chodba p1",
-      "to": "ucebna 104",
-      "weight": 1
-    },
-    {
-      "from": "chodba p1",
-      "to": "ucebna raj",
-      "weight": 1
-    },
-    {
-      "from": "chodba p1",
-      "to": "3D tiskarny",
-      "weight": 1
-    },
-    {
-      "from": "chodba p1",
-      "to": "ucebna P2",
-      "weight": 1
-    },
-    {
-      "from": "ucebna P2",
-      "to": "ucebna P1",
-      "weight": 1
-    },
-    {
-      "from": "ucebna P1",
-      "to": "3D tiskarny",
-      "weight": 1
-    },
-    {
-      "from": "chodba p0",
-      "to": "zadni schodiste p0",
-      "weight": 1
-    },
-    {
-      "from": "zadni schodiste p0",
-      "to": "zadni schodiste p1",
-      "weight": 1
-    },
-    {
-      "from": "zadni schodiste p1",
-      "to": "chodba p1",
-      "weight": 1
-    },
-    {
-      "from": "predni schody p0",
-      "to": "predni schodiste p-1",
-      "weight": 1
-    },
-    {
-      "from": "predni schodiste p-1",
-      "to": "satny p-1",
-      "weight": 1
-    },
-    {
-      "from": "satny p-1",
-      "to": "satny p0",
-      "weight": 1
-    },
-    {
-      "from": "vstupni_hala",
-      "to": "satny p0",
-      "weight": 1
-    },
-    {
-      "from": "chodba p0",
-      "to": "satny p0",
-      "weight": 1
-    },
-    {
-      "from": "satny p0",
-      "to": "exit satny",
-      "weight": 1
-    },
-    {
-      "from": "vstupni_hala",
-      "to": "exit satny",
-      "weight": 1
-    },
-    {
-      "from": "zadni schodiste p0",
-      "to": "exit zadni p0",
       "weight": 1
     }
   ]

@@ -107,11 +107,11 @@ def _generate_instructions(path: list[str], nodes: dict) -> list[str]:
         t = node.get("type", "room")
         label = node["label"]
         if t == "exit":
-            instructions.append(f"✅ Opusťte budovu přes: {label}")
+            instructions.append(f"Opusťte budovu přes: {label}")
         elif t == "stair":
-            instructions.append(f"🔼 Přejděte na schodiště: {label}")
+            instructions.append(f"Přejděte na schodiště: {label}")
         else:
-            instructions.append(f"➡️  Pokračujte do: {label}")
+            instructions.append(f"Pokračujte do: {label}")
     return instructions
 
 

@@ -45,22 +45,6 @@
     #video{width:100%;height:100%;object-fit:cover;display:block;}
     #capture-canvas{display:none;}
 
-    /* Scan overlay */
-    #scan-overlay{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 0.3s;}
-    #scan-overlay.visible{opacity:1;}
-    .scan-line{
-      position:absolute;left:0;right:0;height:2px;
-      background:linear-gradient(90deg,transparent,var(--accent),transparent);
-      box-shadow:0 0 10px var(--accent),0 0 24px rgba(0,232,122,0.3);
-      animation:scanMove 1.6s ease-in-out infinite;
-    }
-    @keyframes scanMove{0%{top:5%;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:95%;opacity:0}}
-    .corner{position:absolute;width:28px;height:28px;border-color:var(--accent);border-style:solid;}
-    .corner-tl{top:12px;left:12px;border-width:2px 0 0 2px;}
-    .corner-tr{top:12px;right:12px;border-width:2px 2px 0 0;}
-    .corner-bl{bottom:12px;left:12px;border-width:0 0 2px 2px;}
-    .corner-br{bottom:12px;right:12px;border-width:0 2px 2px 0;}
-
     /* Room chip – top center */
     #room-chip{
       position:absolute;top:14px;left:50%;transform:translateX(-50%);
@@ -103,10 +87,10 @@
     #nav-panel{
       width:calc(100% - 20px);max-width:500px;
       background:rgba(5,10,8,0.94);
-      border:1px solid var(--accent);border-radius:14px;
+      border:1px solid rgba(0,232,122,0.55);border-radius:10px;
       padding:14px 16px;
       backdrop-filter:blur(14px);
-      box-shadow:0 0 40px rgba(0,232,122,0.2),inset 0 0 0 1px rgba(0,232,122,0.04);
+      box-shadow:0 18px 45px rgba(0,0,0,0.35);
     }
     .nav-header{
       display:flex;align-items:center;justify-content:space-between;
@@ -159,32 +143,6 @@
       padding:10px 14px 18px;display:flex;flex-direction:column;gap:9px;
     }
 
-    /* Stats row */
-    #stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
-    .stat-box{
-      background:var(--bg);border:1px solid var(--border);border-radius:7px;
-      padding:8px 10px;display:flex;flex-direction:column;gap:2px;
-    }
-    .stat-label{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
-    .stat-value{font-family:var(--mono);font-size:16px;line-height:1.1;}
-    .stat-value.ok{color:var(--accent);}
-    .stat-value.warn{color:var(--warn);}
-    .stat-value.dim{color:var(--muted);}
-
-    /* Confidence bar */
-    .conf-bar-wrap{height:2px;background:var(--border);border-radius:1px;margin-top:3px;}
-    .conf-bar{height:100%;background:var(--accent);border-radius:1px;transition:width 0.4s ease;width:0;}
-    .conf-bar.warn{background:var(--warn);}
-
-    /* Thumbnail strip */
-    #log-strip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px;min-height:38px;}
-    #log-strip::-webkit-scrollbar{display:none;}
-    .thumb{flex-shrink:0;width:48px;height:36px;border-radius:5px;overflow:hidden;border:1px solid var(--border);position:relative;background:var(--bg);}
-    .thumb img{width:100%;height:100%;object-fit:cover;}
-    .thumb .ts{position:absolute;bottom:1px;right:2px;font-family:var(--mono);font-size:6px;color:rgba(255,255,255,0.6);}
-    .thumb.new{border-color:var(--accent);box-shadow:0 0 6px rgba(0,232,122,0.3);animation:thumbPop 0.3s ease;}
-    @keyframes thumbPop{0%{transform:scale(0.7);opacity:0}70%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
-
     /* Start button */
     #btn-start{
       width:100%;padding:13px;border:none;border-radius:9px;
@@ -226,14 +184,6 @@
   <div id="camera-wrap">
     <video id="video" autoplay playsinline muted></video>
     <canvas id="capture-canvas"></canvas>
-
-    <div id="scan-overlay">
-      <div class="corner corner-tl"></div>
-      <div class="corner corner-tr"></div>
-      <div class="corner corner-bl"></div>
-      <div class="corner corner-br"></div>
-      <div class="scan-line"></div>
-    </div>
 
     <div id="room-chip">— IDENTIFIKACE —</div>
     <div id="activity-panel">
@@ -277,22 +227,6 @@
 
   <div id="bottom">
     <div id="model-warn">⚠ Model není natrénován – <a href="/admin">Admin → Trénink</a></div>
-    <div id="stats-row">
-      <div class="stat-box">
-        <div class="stat-label">Snímky</div>
-        <div class="stat-value dim" id="s-frames">0</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Místnost</div>
-        <div class="stat-value dim" id="s-room">—</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Jistota</div>
-        <div class="stat-value dim" id="s-conf">—</div>
-        <div class="conf-bar-wrap"><div class="conf-bar" id="conf-bar"></div></div>
-      </div>
-    </div>
-    <div id="log-strip"></div>
     <button id="btn-start">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       Spustit snímání
@@ -301,7 +235,6 @@
 </div>
 <script>
   const INTERVAL_MS = 2200;
-  const MAX_THUMBS  = 16;
 
   let stream=null, intervalId=null, frameCount=0, isRunning=false, ws=null;
 
@@ -310,7 +243,6 @@
   const ctx         = canvas.getContext('2d');
   const btnStart    = document.getElementById('btn-start');
   const statusDot   = document.getElementById('status-dot');
-  const scanOverlay = document.getElementById('scan-overlay');
   const roomChip    = document.getElementById('room-chip');
   const activityPanel = document.getElementById('activity-panel');
   const activityText = document.getElementById('activity-text');
@@ -321,11 +253,6 @@
   const navSteps    = document.getElementById('nav-steps');
   const placeholder = document.getElementById('placeholder');
   const permError   = document.getElementById('perm-error');
-  const logStrip    = document.getElementById('log-strip');
-  const sFrames     = document.getElementById('s-frames');
-  const sRoom       = document.getElementById('s-room');
-  const sConf       = document.getElementById('s-conf');
-  const confBar     = document.getElementById('conf-bar');
   const modelWarn   = document.getElementById('model-warn');
 
   function tr(text){ return window.ExitNavI18n ? window.ExitNavI18n.t(text) : text; }
@@ -362,8 +289,7 @@
       placeholder.style.display = 'none';
       permError.classList.remove('show');
       statusDot.className = 'scanning';
-      scanOverlay.classList.add('visible');
-      roomChip.textContent = '— SKENOVÁNÍ —';
+      roomChip.textContent = 'SNÍMÁNÍ';
       roomChip.classList.add('visible');
       setActivity('Spouštím kameru', 'Připravuji živé snímání a spojení se serverem.', 18);
       btnStart.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"/></svg> Zastavit snímání';
@@ -385,15 +311,11 @@
     if(stream){stream.getTracks().forEach(t=>t.stop()); stream = null;}
     video.srcObject = null; isRunning = false;
     statusDot.className = '';
-    scanOverlay.classList.remove('visible');
     roomChip.classList.remove('visible');
     activityPanel.classList.remove('visible');
     navOverlay.classList.remove('visible');
     btnStart.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Spustit snímání';
     btnStart.classList.remove('running');
-    sRoom.textContent='—'; sRoom.className='stat-value dim';
-    sConf.textContent='—'; sConf.className='stat-value dim';
-    confBar.style.width='0'; confBar.className='conf-bar';
     placeholder.style.display = 'flex';
   }
 
@@ -419,10 +341,8 @@
     if(!video.videoWidth) return;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     frameCount++;
-    sFrames.textContent = frameCount;
-    sFrames.className = 'stat-value ok';
     const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
-    addThumb(dataUrl);
+    console.log('[ExitNav] frame sent', {frame: frameCount});
     setActivity('Odesílám snímek', 'Snímek ' + frameCount + ' míří do modelu.', 70);
     if(ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({frame: dataUrl, ts: Date.now()}));
@@ -435,12 +355,8 @@
     if(inf){
       const room = inf.label.replace(/_/g,' ').toUpperCase();
       const conf = Math.round(inf.confidence * 100);
-      const cls  = !inf.uncertain && conf > 70 ? 'ok' : 'warn';
-      sRoom.textContent = room; sRoom.className = 'stat-value ' + cls;
-      sConf.textContent = conf + '%'; sConf.className = 'stat-value ' + cls;
-      confBar.style.width = conf + '%';
-      confBar.className = 'conf-bar' + (cls === 'warn' ? ' warn' : '');
-      roomChip.textContent = (inf.uncertain ? 'NEJISTÉ · ' : '') + room + '  ·  ' + conf + '%';
+      console.log('[ExitNav] inference', {label: inf.label, confidence: conf, uncertain: inf.uncertain, top: inf.top});
+      roomChip.textContent = (inf.uncertain ? 'NEJISTÉ · ' : '') + room;
       statusDot.className = 'active';
       if(inf.uncertain) setActivity('Nejistý výsledek', 'Model nemá dostatečný rozdíl mezi nejlepšími třídami.', 100);
       else setActivity('Výsledek nalezen', 'Místnost rozpoznána, počítám navigaci.', 100);
@@ -456,23 +372,12 @@
       });
       navOverlay.classList.add('visible');
     } else if(nav && nav.error){
-      navSteps.innerHTML = `<div class="nav-step"><span class="nav-step-num"></span><span style="color:var(--warn)">⚠ Místnost "${inf?.label}" není v grafu budovy</span></div>`;
+      navSteps.innerHTML = `<div class="nav-step"><span class="nav-step-num"></span><span style="color:var(--warn)">Místnost "${inf?.label}" není v grafu budovy</span></div>`;
       navDist.textContent = '';
       navOverlay.classList.add('visible');
     }
   }
 
-  function addThumb(dataUrl){
-    const now = new Date();
-    const ts = now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
-    const div = document.createElement('div'); div.className = 'thumb new';
-    const img = document.createElement('img'); img.src = dataUrl;
-    const span = document.createElement('span'); span.className = 'ts'; span.textContent = ts;
-    div.appendChild(img); div.appendChild(span);
-    logStrip.insertBefore(div, logStrip.firstChild);
-    setTimeout(() => div.classList.remove('new'), 400);
-    while(logStrip.children.length > MAX_THUMBS) logStrip.removeChild(logStrip.lastChild);
-  }
 </script>
 <script src="/static/theme.js"></script>
 <script src="/static/i18n.js"></script>

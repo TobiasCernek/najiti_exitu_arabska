@@ -120,6 +120,16 @@
       cursor:pointer;transition:all 0.15s;
     }
     .frame-cell .frame-delete:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+    .frame-cell .frame-move{
+      position:absolute;left:4px;right:4px;bottom:18px;display:flex;gap:4px;
+      background:rgba(10,12,14,0.86);border:1px solid var(--border);border-radius:5px;padding:4px;
+    }
+    .frame-cell .frame-move select{font-size:9px;padding:3px 4px;border-radius:4px;}
+    .frame-cell .frame-move button{
+      flex-shrink:0;border:1px solid var(--border);background:var(--surface);color:var(--text);
+      border-radius:4px;font-family:var(--mono);font-size:9px;padding:0 5px;cursor:pointer;
+    }
+    .frame-cell .frame-move button:hover{border-color:var(--accent2);color:var(--accent2);}
     #frame-modal-empty{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;padding:30px 0;}
 
     /* Model badge */
@@ -168,7 +178,9 @@
 
       <div class="form-group">
         <label>Label (název místnosti = ID uzlu v grafu)</label>
-        <input id="in-label" placeholder="ucebna_101" />
+        <select id="in-label">
+          <option value="">Načítám uzly z grafu...</option>
+        </select>
       </div>
       <div class="form-group">
         <label>FPS extrakce (snímků za sekundu z videa)</label>
@@ -250,6 +262,7 @@
   const authToken = sessionStorage.getItem('exitnav_token') || '';
   let selectedFile = null;
   let trainPollId  = null;
+  let graphLabels = [];
 
   // ---- Drop zone -----------------------------------------------
   const dropZone = document.getElementById('drop-zone');
@@ -468,11 +481,19 @@
       }
       grid.innerHTML = d.frames.map(f => {
         const url = API + '/api/training/classes/' + encodeURIComponent(label) + '/frames/' + encodeURIComponent(f)
-          + '?t=' + encodeURIComponent(authToken);
+          + '?token=' + encodeURIComponent(authToken);
+        const moveOptions = graphLabels
+          .filter(l => l !== label)
+          .map(l => `<option value="${htmlAttr(l)}">${htmlText(l)}</option>`)
+          .join('');
+        const moveControl = moveOptions
+          ? `<div class="frame-move"><select id="move-${cssId(f)}">${moveOptions}</select><button onclick="moveFrame('${escAttr(f)}')">Přesunout</button></div>`
+          : '';
         return `
           <div class="frame-cell">
             <img src="${url}" loading="lazy" alt="${f}" />
             <button class="frame-delete" title="Smazat frame" onclick="deleteFrame('${escAttr(f)}')">✕</button>
+            ${moveControl}
             <div class="frame-name">${f}</div>
           </div>`;
       }).join('');
@@ -496,12 +517,57 @@
     }
   }
 
+  async function moveFrame(filename) {
+    if (!currentFrameLabel) return;
+    const target = document.getElementById('move-' + cssId(filename))?.value;
+    if (!target || target === currentFrameLabel) return;
+    try {
+      const r = await fetch(
+        API + '/api/training/classes/' + encodeURIComponent(currentFrameLabel) + '/frames/' + encodeURIComponent(filename) + '/move',
+        {
+          method: 'POST',
+          headers: {'Content-Type':'application/json','x-session-token': authToken},
+          body: JSON.stringify({target_label: target})
+        }
+      );
+      if (!r.ok) throw new Error(await readError(r));
+      await loadFrames(currentFrameLabel);
+      refreshClasses();
+    } catch(e) {
+      alert('Chyba při přesunu framu: ' + e.message);
+    }
+  }
+
+  async function refreshGraphLabels() {
+    const sel = document.getElementById('in-label');
+    const prev = sel.value;
+    try {
+      const r = await fetch(API + '/api/graph');
+      if (!r.ok) throw new Error('Graf nenalezen');
+      const d = await r.json();
+      graphLabels = Object.keys(d.nodes || {}).sort();
+      sel.innerHTML = '<option value="">Vyberte uzel z grafu</option>'
+        + graphLabels.map(l => `<option value="${htmlAttr(l)}">${htmlText(l)}</option>`).join('');
+      if (prev && graphLabels.includes(prev)) sel.value = prev;
+    } catch(e) {
+      graphLabels = [];
+      sel.innerHTML = '<option value="">Graf se nepodařilo načíst</option>';
+    }
+  }
+
+  function htmlText(s) {
+    return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function htmlAttr(s) { return htmlText(s); }
+  function cssId(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, '_'); }
+
   // Init
   if (!authToken) {
     document.getElementById('train-log').textContent = 'Pro trénink se nejdřív přihlaste v administraci.';
   }
   refreshModelStatus();
   refreshClasses();
+  refreshGraphLabels();
 
   async function readError(response) {
     try {

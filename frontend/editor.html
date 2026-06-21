@@ -365,7 +365,7 @@ function openNodeModal(id) {
   modalType='node'; modalId=id;
   document.getElementById('modal-title').textContent='Upravit uzel';
   document.getElementById('modal-body').innerHTML=`
-    <div class="form-group"><label>ID uzlu</label><input id="m-id" value="${id}" readonly style="opacity:0.5"/></div>
+    <div class="form-group"><label>ID uzlu</label><input id="m-id" value="${id}"/></div>
     <div class="form-group"><label>Název</label><input id="m-label" value="${n.label||''}"/></div>
     <div class="form-group"><label>Typ</label>
       <select id="m-type">
@@ -394,10 +394,27 @@ function closeModal(){document.getElementById('modal-bg').classList.remove('show
 
 function modalSave(){
   if(modalType==='node'){
+    const newId=document.getElementById('m-id').value.trim();
+    if(!newId){alert('ID uzlu nesmí být prázdné');return;}
+    if(newId!==modalId && graph.nodes[newId]){alert('ID již existuje');return;}
     const n=graph.nodes[modalId];
-    n.label=document.getElementById('m-label').value.trim()||modalId;
+    n.label=document.getElementById('m-label').value.trim()||newId;
     n.type=document.getElementById('m-type').value;
     n.floor=parseInt(document.getElementById('m-floor').value)||0;
+    if(newId!==modalId){
+      graph.nodes[newId]=n;
+      delete graph.nodes[modalId];
+      if(positions[modalId]){
+        positions[newId]=positions[modalId];
+        delete positions[modalId];
+      }
+      graph.edges.forEach(e=>{
+        if(e.from===modalId)e.from=newId;
+        if(e.to===modalId)e.to=newId;
+      });
+      if(selectedId===modalId)selectedId=newId;
+      modalId=newId;
+    }
   } else if(modalType==='edge'){
     graph.edges[modalId].weight=parseFloat(document.getElementById('m-weight').value)||1;
   }

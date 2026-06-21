@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import re
+import math
 import sys
 from pathlib import Path
 
@@ -20,10 +20,11 @@ except ImportError:
 
 
 def _safe_label(label: str) -> str:
-    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", label.strip())
-    cleaned = cleaned.strip("._-")
-    if not cleaned:
+    cleaned = label.strip()
+    if not cleaned or cleaned in {".", ".."}:
         raise ValueError("Label cannot be empty.")
+    if any(ch in cleaned for ch in ['/', '\\', ':', '*', '?', '"', '<', '>', '|']) or any(ord(ch) < 32 for ch in cleaned):
+        raise ValueError("Label contains invalid path characters.")
     return cleaned
 
 
@@ -84,7 +85,7 @@ def extract_frames(
     reported_fps = cap.get(cv2.CAP_PROP_FPS) or 0.0
     reported_frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0.0
     fps = max(0.1, float(fps))
-    interval_sec = 1.0 / fps
+    effective_fps = reported_fps if reported_fps > 1 else 25.0
 
     existing = sorted(out_dir.glob("frame_*.jpg"))
     start_idx = len(existing)
@@ -94,7 +95,7 @@ def extract_frames(
     skipped_duplicate = 0
     frame_idx = 0
     last_fingerprint: int | None = None
-    next_target_sec = 0.0
+    last_sample_slot = -1
     last_timestamp_sec = 0.0
     fallback_to_index_step = False
 
@@ -103,29 +104,24 @@ def extract_frames(
         if not ret:
             break
 
-        timestamp_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
-        timestamp_sec = timestamp_ms / 1000.0 if timestamp_ms and timestamp_ms > 0 else None
-
-        if timestamp_sec is None:
-            # Some codecs/containers never report a valid POS_MSEC (stays 0).
-            # Fall back to evenly-spaced index sampling using the reported
-            # FPS (or a sane default if that's also missing/zero).
-            fallback_to_index_step = True
-            effective_fps = reported_fps if reported_fps > 1 else 25.0
-            step = max(1, int(round(effective_fps / fps)))
-            take = frame_idx % step == 0
+        timestamp_ms = cap.get(cv2.CAP_PROP_POS_MSEC) or 0.0
+        if timestamp_ms > 0:
+            timestamp_sec = timestamp_ms / 1000.0
         else:
-            last_timestamp_sec = timestamp_sec
-            take = timestamp_sec + 1e-6 >= next_target_sec
+            fallback_to_index_step = True
+            timestamp_sec = frame_idx / effective_fps
+
+        last_timestamp_sec = max(last_timestamp_sec, timestamp_sec)
+        sample_slot = int(math.floor(timestamp_sec * fps + 1e-6))
+        take = sample_slot > last_sample_slot
 
         if take:
+            last_sample_slot = sample_slot
             if filter_quality:
                 reason = _quality_reason(frame, min_blur, min_brightness)
                 if reason:
                     skipped_dark_blurry += 1
                     frame_idx += 1
-                    if not fallback_to_index_step:
-                        next_target_sec += interval_sec
                     continue
                 fingerprint = _frame_fingerprint(frame)
                 if (
@@ -134,8 +130,6 @@ def extract_frames(
                 ):
                     skipped_duplicate += 1
                     frame_idx += 1
-                    if not fallback_to_index_step:
-                        next_target_sec += interval_sec
                     continue
                 last_fingerprint = fingerprint
             filename = out_dir / f"frame_{start_idx + saved:05d}.jpg"
@@ -143,8 +137,6 @@ def extract_frames(
             if not ok:
                 raise RuntimeError(f"Could not write frame: {filename}")
             saved += 1
-            if not fallback_to_index_step:
-                next_target_sec += interval_sec
         frame_idx += 1
 
     cap.release()
