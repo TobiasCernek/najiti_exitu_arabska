@@ -131,7 +131,7 @@
       "floor": 1
     },
     "chodba_p1_zadek": {
-      "label": "chodba_p1_zadek",
+      "label": "Chodba v prvním patře",
       "type": "room",
       "floor": 1
     }
